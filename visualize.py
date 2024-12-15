@@ -90,7 +90,7 @@ class Visualizer:
         plt.ylabel("Kayıp (Loss)")
         plt.title(f"{optimizer_name} - {hidden_layers} Gizli Katman")
         plt.legend()
-        save_path = os.path.join(self.save_dir, f"{optimizer_name}_{hidden_layers}_loss.png")
+        save_path = os.path.join(self.save_dir, f"ann_{optimizer_name}_{hidden_layers}_loss.png")
         plt.savefig(save_path)
         plt.show()
 
