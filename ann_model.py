@@ -3,16 +3,10 @@ from tensorflow.keras.layers import Dense
 from tensorflow.keras.optimizers import SGD
 
 class ANNModel:
-    """
-    Yapay Sinir Ağı modeli oluşturma ve eğitim işlemleri.
-    """
-
     def __init__(self, input_dim, hidden_layers, learning_rate=0.01):
         """
-        Model sınıfını başlatır.
-
-        Args:
-        - input_dim: Giriş boyutu (özellik sayısı)
+        Yapay Sinir Ağı Modeli.
+        - input_dim: Giriş boyutu
         - hidden_layers: Gizli katman sayısı
         - learning_rate: Öğrenme hızı
         """
@@ -23,33 +17,21 @@ class ANNModel:
 
     def _build_model(self):
         """
-        Yapay Sinir Ağı modelini oluşturur.
-
-        Returns:
-        - model: Derlenmiş Keras modeli
+        Sigmoid aktivasyon fonksiyonu ile model inşa eder.
         """
         model = Sequential()
-        model.add(Dense(16, activation='relu', input_dim=self.input_dim))
+        model.add(Dense(16, activation='sigmoid', input_dim=self.input_dim))  # İlk gizli katman
         for _ in range(self.hidden_layers - 1):
-            model.add(Dense(16, activation='relu'))
-        model.add(Dense(1, activation='sigmoid'))
-        model.compile(optimizer=SGD(learning_rate=self.learning_rate), loss='binary_crossentropy', metrics=['accuracy'])
+            model.add(Dense(16, activation='sigmoid'))  # Ek gizli katmanlar
+        model.add(Dense(1, activation='sigmoid'))  # Çıkış katmanı
+        model.compile(optimizer=SGD(learning_rate=self.learning_rate), 
+                      loss='binary_crossentropy', 
+                      metrics=['accuracy'])
         return model
 
     def train(self, X_train, y_train, X_val, y_val, epochs, batch_size):
         """
         Modeli eğitir.
-
-        Args:
-        - X_train: Eğitim özellikleri
-        - y_train: Eğitim etiketleri
-        - X_val: Doğrulama özellikleri
-        - y_val: Doğrulama etiketleri
-        - epochs: Epoch sayısı
-        - batch_size: Batch boyutu
-
-        Returns:
-        - history: Eğitim geçmişi (loss ve accuracy)
         """
         history = self.model.fit(
             X_train, y_train,
@@ -63,12 +45,6 @@ class ANNModel:
     def predict(self, X):
         """
         Model ile tahmin yapar.
-
-        Args:
-        - X: Özellikler
-
-        Returns:
-        - np.ndarray: Tahminler (0 veya 1)
         """
         predictions = self.model.predict(X)
         return (predictions > 0.5).astype("int32")
