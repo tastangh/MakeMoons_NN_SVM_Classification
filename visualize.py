@@ -186,26 +186,6 @@ class Visualizer:
         plt.savefig(save_path)
         plt.show()
 
-    def plot_overfitting_analysis(self, history, optimizer_name, hidden_layers):
-        """
-        Eğitim ve doğrulama kayıplarını karşılaştırarak aşırı öğrenme analizini görselleştirir.
-
-        Args:
-        - history: Modelin eğitim geçmişi (Keras History nesnesi)
-        - optimizer_name: Optimizasyon yöntemi adı
-        - hidden_layers: Gizli katman sayısı
-        """
-        plt.figure(figsize=(10, 6))
-        plt.plot(history.history["loss"], label="Eğitim Kaybı", marker='o')
-        plt.plot(history.history["val_loss"], label="Doğrulama Kaybı", marker='x')
-        plt.xlabel("Epoch")
-        plt.ylabel("Kayıp (Loss)")
-        plt.title(f"Aşırı Öğrenme Analizi: {optimizer_name} - {hidden_layers} Gizli Katman")
-        plt.legend()
-        save_path = os.path.join(self.save_dir, f"{optimizer_name}_{hidden_layers}_overfitting_analysis.png")
-        plt.savefig(save_path)
-        plt.show()
-
     def plot_model_comparison(self, ann_metrics, svm_metrics, save_path):
         """
         ANN ve SVM modellerinin metriklerini bar grafiği ile karşılaştırır.
