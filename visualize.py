@@ -38,7 +38,7 @@ class Visualizer:
 
         save_path = os.path.join(self.save_dir, "tum_veri_seti.png")
         plt.savefig(save_path)
-        plt.show()
+      #  plt.show()
 
     def plot_individual(self, X, y, title, save_file):
         """
@@ -60,7 +60,7 @@ class Visualizer:
 
         save_path = os.path.join(self.save_dir, save_file)
         plt.savefig(save_path)
-        plt.show()
+      #  plt.show()
 
     def plot_splits(self, splits):
         """
@@ -74,15 +74,20 @@ class Visualizer:
             save_file = f"{set_name}_seti.png"
             self.plot_individual(X, y, title, save_file)
 
-    def plot_loss(self, history, optimizer_name, hidden_layers):
+    def plot_loss(self, history, optimizer_name, hidden_layers, save_dir, file_name="loss_plot.png"):
         """
         Eğitim ve doğrulama kayıplarını epoch bazında çizer ve kaydeder.
 
         Args:
-        - history: Modelin eğitim geçmişi (Keras History nesnesi)
-        - optimizer_name: Optimizasyon yöntemi (örn. "SGD", "Batch GD")
-        - hidden_layers: Gizli katman sayısı
+        - history: Modelin eğitim geçmişi (Keras History nesnesi).
+        - optimizer_name (str): Optimizasyon yöntemi (örn. "SGD", "Batch GD").
+        - hidden_layers (int): Gizli katman sayısı.
+        - save_dir (str): Grafiklerin kaydedileceği dizin.
+        - file_name (str): Kaydedilecek dosya adı.
         """
+        os.makedirs(save_dir, exist_ok=True)
+        file_path = os.path.join(save_dir, file_name)
+
         plt.figure(figsize=(10, 6))
         plt.plot(history.history["loss"], label="Eğitim Kaybı", marker='o')
         plt.plot(history.history["val_loss"], label="Doğrulama Kaybı", marker='x')
@@ -90,9 +95,11 @@ class Visualizer:
         plt.ylabel("Kayıp (Loss)")
         plt.title(f"{optimizer_name} - {hidden_layers} Gizli Katman")
         plt.legend()
-        save_path = os.path.join(self.save_dir, f"ann_{optimizer_name}_{hidden_layers}_loss.png")
-        plt.savefig(save_path)
-        plt.show()
+        plt.savefig(file_path)
+        plt.close()
+      #  plt.show()
+
+
 
     def plot_decision_boundary(self, model, X, y, save_path, model_type="ANN"):
         """
@@ -120,7 +127,7 @@ class Visualizer:
         plt.scatter(X[:, 0], X[:, 1], c=y, edgecolors='k', marker='o')
         plt.title(f"{model_type} Decision Boundary")
         plt.savefig(save_path)
-        plt.show()
+      #  plt.show()
 
     def plot_confusion_matrix(self, cm, class_labels, title, save_path):
         """
@@ -138,7 +145,7 @@ class Visualizer:
         plt.ylabel("Gerçek")
         plt.title(title)
         plt.savefig(save_path)
-        plt.show()
+      #  plt.show()
 
     def plot_combined_metrics_table(self, metrics_list, optimizer_names, hidden_layers_list, save_path):
         """
@@ -184,7 +191,7 @@ class Visualizer:
 
         # Kaydet ve göster
         plt.savefig(save_path)
-        plt.show()
+      #  plt.show()
 
     def plot_model_comparison(self, ann_metrics, svm_metrics, save_path):
         """
@@ -213,4 +220,4 @@ class Visualizer:
         plt.legend()
         plt.tight_layout()
         plt.savefig(save_path)
-        plt.show()
+        # plt.show()
