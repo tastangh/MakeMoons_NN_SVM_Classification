@@ -17,7 +17,7 @@ class Tee:
     def write(self, obj):
         for f in self.files:
             f.write(obj)
-            f.flush()  # Ensure immediate write
+            f.flush()
 
     def flush(self):
         for f in self.files:
@@ -26,6 +26,7 @@ class Tee:
 # Redirect output
 log_file = open(log_file_path, "w")
 sys.stdout = Tee(sys.stdout, log_file)
+
 # Constants
 SAVE_DIR = "results"
 MODEL_DIR = "models"
@@ -56,12 +57,19 @@ layer_configurations = [1, 2, 3]
 best_ann_model = None
 best_ann_val_loss = float("inf")
 
+# Collect data for the metrics table
+metrics_list = []
+optimizer_names = []
+hidden_layers_list = []
+lrs = []
+epochs_list_final = []
+
 for lr in learning_rates:
     for epochs in epochs_list:
         for optimizer_name, batch_size in optimizers.items():
             for hidden_layers in layer_configurations:
                 print(f"Training ANN: LR={lr}, Epochs={epochs}, Optimizer={optimizer_name}, Layers={hidden_layers}...")
-                
+
                 # Initialize and train the ANN model
                 ann_builder = ANNModel(input_dim=X_train.shape[1], hidden_layers=hidden_layers, learning_rate=lr)
                 ann_model = ann_builder.build_model()
@@ -73,23 +81,35 @@ for lr in learning_rates:
                     batch_size=batch_size,
                     verbose=1
                 )
-                
+
+                # Calculate metrics
+                val_accuracy = max(history.history["val_accuracy"])
+                val_loss = min(history.history["val_loss"])
+                y_pred = (ann_model.predict(X_test) > 0.5).astype(int).flatten()
+                evaluator = MetricsEvaluator(y_test, y_pred)
+                metrics = evaluator.get_metrics()
+
+                # Append metrics and corresponding info
+                metrics_list.append(metrics)
+                optimizer_names.append(optimizer_name)
+                hidden_layers_list.append(hidden_layers)
+                lrs.append(lr)
+                epochs_list_final.append(epochs)
+
                 # Save model and visualize results
                 result_path = os.path.join(SAVE_DIR, f"LR_{lr}_Epoch_{epochs}/Optimizer_{optimizer_name}/Layers_{hidden_layers}")
                 os.makedirs(result_path, exist_ok=True)
-                
-                visualizer.plot_loss(history, optimizer_name=optimizer_name, hidden_layers=hidden_layers, save_dir=result_path)
 
+                visualizer.plot_loss(history, optimizer_name=optimizer_name, hidden_layers=hidden_layers, save_dir=result_path)
                 ann_model.save(os.path.join(result_path, f"ann_model.h5"))
 
                 # Update best model based on validation loss
-                val_loss = min(history.history["val_loss"])
                 if val_loss < best_ann_val_loss:
                     best_ann_val_loss = val_loss
                     best_ann_model = ann_model
 
 # Step 3: SVM Training with Kernel Variations
-print("Training SVM models with different kernels and parameters...")
+print("\nTraining SVM models with different kernels and parameters...")
 best_svm_model = None
 best_svm_accuracy = 0
 
@@ -111,9 +131,11 @@ for kernel, params in kernel_params.items():
                 
                 # Evaluate on validation set
                 val_accuracy = svm_model.score(X_val, y_val)
+                print(f"Validation Accuracy: {val_accuracy:.4f}")
+                
                 result_path = os.path.join(SAVE_DIR, f"SVM_{kernel}_C_{C}_Degree_{degree}_Gamma_{gamma}")
                 os.makedirs(result_path, exist_ok=True)
-                
+
                 # Save model and update best model
                 joblib.dump(svm_model, os.path.join(result_path, f"svm_model.pkl"))
                 if val_accuracy > best_svm_accuracy:
@@ -121,7 +143,7 @@ for kernel, params in kernel_params.items():
                     best_svm_model = svm_model
 
 # Step 4: Evaluate the Best Models
-print("Evaluating the best models...")
+print("\nEvaluating the best models...")
 
 # ANN Evaluation
 if best_ann_model:
@@ -165,13 +187,19 @@ if best_svm_model:
         model_type="SVM"
     )
 
-# Comparison Plot
-if best_ann_model and best_svm_model:
-    print("Comparing ANN and SVM models...")
-    visualizer.plot_model_comparison(
-        ann_metrics=ann_metrics,
-        svm_metrics=svm_metrics,
-        save_path=os.path.join(SAVE_DIR, "ann_vs_svm_comparison.png")
-    )
+# Step 5: Combined Metrics Table
+print("Generating combined metrics table...")
+metrics_table_path = os.path.join(SAVE_DIR, "combined_metrics_table.png")
+visualizer.plot_combined_metrics_table(
+    metrics_list=metrics_list,
+    optimizer_names=optimizer_names,
+    hidden_layers_list=hidden_layers_list,
+    lrs=lrs,
+    epochs_list=epochs_list_final,
+    save_path=metrics_table_path
+)
 
 print("\nTraining and evaluation complete! All results saved in the 'results' and 'models' directories.")
+
+# Close log file
+log_file.close()

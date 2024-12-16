@@ -147,7 +147,7 @@ class Visualizer:
         plt.savefig(save_path)
       #  plt.show()
 
-    def plot_combined_metrics_table(self, metrics_list, optimizer_names, hidden_layers_list, save_path):
+    def plot_combined_metrics_table(self, metrics_list, optimizer_names, hidden_layers_list, lrs, epochs_list, save_path):
         """
         Birden fazla metrik setini düzenli bir tablo halinde çizer ve kaydeder.
 
@@ -155,32 +155,29 @@ class Visualizer:
         - metrics_list: Her bir optimizasyon yöntemi ve gizli katman sayısı için metrik değerlerini içeren liste.
         - optimizer_names: Optimizasyon yöntemlerinin isimleri (örn. ["SGD", "MBGD", "BGD"]).
         - hidden_layers_list: Her metrik setine karşılık gelen gizli katman sayıları.
+        - lrs: Learning rate değerlerinin listesi.
+        - epochs_list: Epoch değerlerinin listesi.
         - save_path: Kaydedilecek dosya yolu.
         """
         # Tablo başlıkları
-        headers = ["Optimizer", "Hidden Layers", "Accuracy", "Precision", "Recall", "F1-Score"]
+        headers = ["Optimizer", "LR", "Epochs", "Hidden Layers", "Accuracy", "Precision", "Recall", "F1-Score"]
 
-        # Gruplandırılmış tablo verisi
+        # Tablo satırları için veri
         rows = []
-        optimizers = sorted(set(optimizer_names))  # Benzersiz optimizer isimleri
-
-        for optimizer in optimizers:
-            for hidden_layers in [1, 2, 3]:  # 1, 2, 3 katmanlı modeller
-                for i, opt_name in enumerate(optimizer_names):
-                    if opt_name == optimizer and hidden_layers_list[i] == hidden_layers:
-                        metrics = metrics_list[i]
-                        rows.append([
-                            optimizer if hidden_layers == 1 else "",  # İlk katman için optimizer ismini ekle
-                            hidden_layers,
-                            f"{metrics['accuracy']:.2f}",
-                            f"{metrics['precision']:.2f}",
-                            f"{metrics['recall']:.2f}",
-                            f"{metrics['f1_score']:.2f}"
-                        ])
-                        break
+        for i, metrics in enumerate(metrics_list):
+            rows.append([
+                optimizer_names[i],
+                f"{lrs[i]:.4f}",
+                epochs_list[i],
+                hidden_layers_list[i],
+                f"{metrics['accuracy']:.2f}",
+                f"{metrics['precision']:.2f}",
+                f"{metrics['recall']:.2f}",
+                f"{metrics['f1_score']:.2f}"
+            ])
 
         # Grafiksel tablo oluşturma
-        plt.figure(figsize=(12, 8))
+        plt.figure(figsize=(16, 10))
         plt.axis("off")
         plt.title("Combined Metrics Table", fontsize=16, fontweight="bold")
 
@@ -191,7 +188,7 @@ class Visualizer:
 
         # Kaydet ve göster
         plt.savefig(save_path)
-      #  plt.show()
+        plt.close()
 
     def plot_model_comparison(self, ann_metrics, svm_metrics, save_path):
         """
