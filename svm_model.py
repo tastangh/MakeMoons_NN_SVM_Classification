@@ -1,14 +1,33 @@
 from sklearn.svm import SVC
 
 class SVMModel:
-    def __init__(self, kernel='rbf', C=1.0, gamma='scale'):
+    """
+    Modüler bir SVM modeli sınıfı.
+    Sadece modeli oluşturmak için kullanılır.
+    """
+
+    def __init__(self, kernel='linear', C=1.0, degree=3, gamma='scale'):
+        """
+        SVMModel sınıfını başlatır.
+
+        Args:
+        - kernel (str): SVM kernel türü (default: 'linear').
+        - C (float): Regularization parametresi (default: 1.0).
+        - degree (int): Polinom çekirdek için derece (default: 3).
+        - gamma (str or float): RBF veya polinom çekirdek için gamma parametresi (default: 'scale').
+        """
         self.kernel = kernel
         self.C = C
+        self.degree = degree
         self.gamma = gamma
-        self.model = SVC(kernel=kernel, C=C, gamma=gamma)
+        self.model = None
 
-    def train(self, X_train, y_train):
-        self.model.fit(X_train, y_train)
+    def build_model(self):
+        """
+        SVM modelini oluşturur ve geri döndürür.
 
-    def predict(self, X):
-        return self.model.predict(X)
+        Returns:
+        - model (sklearn.svm.SVC): SVM modeli.
+        """
+        self.model = SVC(kernel=self.kernel, C=self.C, degree=self.degree, gamma=self.gamma, probability=True)
+        return self.model
