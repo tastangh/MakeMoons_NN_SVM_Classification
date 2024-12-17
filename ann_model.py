@@ -54,21 +54,3 @@ class ANNModel:
         self.model = model
         return model
 
-    def get_model_summary(self):
-        """
-        Modelin özetini döndürür.
-
-        Returns:
-        - (str): Modelin özet bilgisi.
-        """
-        if self.model:
-            from io import StringIO
-            import sys
-            # Model özetini bir string olarak döndür
-            stream = StringIO()
-            sys.stdout = stream
-            self.model.summary()
-            sys.stdout = sys.__stdout__
-            return stream.getvalue()
-        else:
-            return "Model henüz oluşturulmadı. 'build_model' fonksiyonunu çağırın."

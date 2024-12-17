@@ -88,7 +88,7 @@ class Visualizer:
         - save_dir (str): Kayıt dizini.
         """
         os.makedirs(save_dir, exist_ok=True)
-        file_name = f"loss_LR{learning_rate}_Epochs{epochs}_Opt{optimizer_name}_Layers{hidden_layers}.png"
+        file_name = f"ann_loss_LR{learning_rate}_Epochs{epochs}_Opt{optimizer_name}_Layers{hidden_layers}.png"
         title = (f"Kayıp Grafiği - LR: {learning_rate}, Epochs: {epochs}, "
                  f"Optimizer: {optimizer_name}, Layers: {hidden_layers}")
         
@@ -133,14 +133,17 @@ class Visualizer:
         plt.figure(figsize=(8, 6))
         plt.contourf(xx, yy, Z, alpha=0.3, cmap="coolwarm")
         plt.scatter(X[:, 0], X[:, 1], c=y, cmap="coolwarm", edgecolors='k', marker='o')
+
+        # Başlık düzenlemesi (çok uzun başlıklar için)
+        title_details = "\n".join([f"{key}={value}" for key, value in kwargs.items()])
+        plt.title(f"Decision Boundary ({model_type})\n{title_details}", fontsize=10, wrap=True)
         
-        title_details = ", ".join([f"{key}={value}" for key, value in kwargs.items()])
-        plt.title(f"Decision Boundary ({model_type}) - {title_details}")
         plt.xlabel("Feature 1")
         plt.ylabel("Feature 2")
         plt.tight_layout()
         plt.savefig(save_path)
         plt.close()
+
 
     def plot_confusion_matrix(self, cm, class_labels, title, save_path):
         """

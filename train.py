@@ -110,16 +110,20 @@ for lr in learning_rates:
                 )
 
                 # Save decision boundary
+                decision_boundary_path = os.path.join(
+                    DECISION_PLOTS_DIR, 
+                    f"ann_decision_boundary_LR{lr}_Epoch{epochs}_Opt{optimizer_name}_Layers{hidden_layers}.png"
+                )
                 visualizer.plot_decision_boundary(
                     model=ann_model,
                     X=X_test,
                     y=y_test,
-                    save_dir=DECISION_PLOTS_DIR,
+                    save_path=decision_boundary_path,  # Doğru parametre adı
+                    model_type="ANN",
                     learning_rate=lr,
                     epochs=epochs,
                     optimizer_name=optimizer_name,
-                    hidden_layers=hidden_layers,
-                    model_type="ANN"
+                    hidden_layers=hidden_layers
                 )
 
                 # Save model
@@ -149,12 +153,15 @@ for kernel, params in kernel_params.items():
                 model_types.append("SVM")
 
                 # Save decision boundary
-                decision_boundary_path = os.path.join(DECISION_PLOTS_DIR, f"svm_decision_boundary_{kernel}_C{C}_Degree{degree}_Gamma{gamma}.png")
+                decision_boundary_path = os.path.join(
+                    DECISION_PLOTS_DIR, 
+                    f"svm_decision_boundary_{kernel}_C{C}_Degree{degree}_Gamma{gamma}.png"
+                )
                 visualizer.plot_decision_boundary(
                     model=svm_model,
                     X=X_test,
                     y=y_test,
-                    save_path=decision_boundary_path,
+                    save_path=decision_boundary_path,  # Doğru parametre adı
                     model_type="SVM"
                 )
 
