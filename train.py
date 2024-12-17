@@ -8,23 +8,20 @@ from svm_model import SVMModel
 from metrics import MetricsEvaluator
 import tensorflow as tf
 
+# Redirect stdout to a file as well as console
+log_file_path = "training_log.txt"
 class Tee:
     def __init__(self, *files):
         self.files = files
 
     def write(self, obj):
         for f in self.files:
-            if not f.closed:  # Dosya kapalı değilse yaz
-                f.write(obj)
-                f.flush()
+            f.write(obj)
+            f.flush()
 
     def flush(self):
         for f in self.files:
-            try:
-                if not f.closed:
-                    f.flush()
-            except ValueError:
-                pass  # Dosya zaten kapalıysa hata görmezden gel
+            f.flush()
 
 # Redirect output
 log_file = open(log_file_path, "w")
