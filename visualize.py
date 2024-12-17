@@ -2,6 +2,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
 class Visualizer:
     """
@@ -145,20 +146,20 @@ class Visualizer:
         plt.close()
 
 
-    def plot_confusion_matrix(self, cm, class_labels, title, save_path):
+    def plot_confusion_matrix(y_true, y_pred, save_path, title):
         """
-        Confusion matrix'i görselleştirir.
+        Confusion Matrix'i çizer ve kaydeder.
 
-        Args:
-        - cm: Confusion matrix (sklearn.metrics.confusion_matrix çıktısı)
-        - class_labels: Sınıf etiketleri (örn. ["Class 0", "Class 1"])
-        - title: Grafik başlığı
-        - save_path: Kaydedilecek dosya yolu
+        Parametreler:
+        y_true -- Gerçek etiketler
+        y_pred -- Tahmin edilen etiketler
+        save_path -- Kaydedilecek dosya yolu
+        title -- Grafiğin başlığı
         """
-        plt.figure(figsize=(8, 6))
-        sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=class_labels, yticklabels=class_labels)
-        plt.xlabel("Tahmin Edilen")
-        plt.ylabel("Gerçek")
+        cm = confusion_matrix(y_true, y_pred)
+        disp = ConfusionMatrixDisplay(confusion_matrix=cm)
+        fig, ax = plt.subplots(figsize=(6, 6))
+        disp.plot(cmap='Blues', ax=ax, colorbar=False)
         plt.title(title)
         plt.savefig(save_path)
         plt.close()

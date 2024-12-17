@@ -46,6 +46,7 @@ class Trainer:
     def __init__(self):
         self._initialize_directories()
         self._initialize_logger()
+        self.metrics_list = []  
         print("Trainer initialized.")
 
     def _initialize_directories(self):
@@ -56,8 +57,9 @@ class Trainer:
         self.model_dir = os.path.join(self.save_dir, "models")
         self.plots_dir = os.path.join(self.save_dir, "plots")
         self.loss_plots_dir = os.path.join(self.plots_dir, "loss")
-        self.decision_plots_dir = os.path.join(self.plots_dir, "decision_boundaries")
-        
+        self.decision_plots_dir = os.path.join(self.plots_dir, "val_decision_boundaries")
+        self.metrics_path = os.path.join(self.save_dir, "combined_metrics.txt") 
+
         os.makedirs(self.save_dir, exist_ok=True)
         os.makedirs(self.model_dir, exist_ok=True)
         os.makedirs(self.loss_plots_dir, exist_ok=True)
@@ -68,8 +70,8 @@ class Trainer:
         Loglama işlemlerini başlatır.
         """
         log_file_path = os.path.join(self.save_dir, "training_log.txt")
-        log_file = open(log_file_path, "w")
-        sys.stdout = Tee(sys.stdout, log_file)
+        self.log_file = open(log_file_path, "w")  # Log dosyasını self.log_file olarak tanımla
+        sys.stdout = Tee(sys.stdout, self.log_file)
 
     def prepare_data(self):
         """
@@ -82,7 +84,6 @@ class Trainer:
 
         self.X_train, self.y_train = splits["train"]
         self.X_val, self.y_val = splits["validation"]
-        self.X_test, self.y_test = splits["test"]
 
         print("Visualizing the dataset...")
         self.visualizer = Visualizer(save_dir=self.plots_dir)
@@ -101,7 +102,6 @@ class Trainer:
         optimizers -- Optimizasyon yöntemleri (örneğin, SGD, MBGD)
         layer_configurations -- Gizli katman sayıları listesi
         """
-        metrics_list = []
 
         for lr in learning_rates:
             for epochs in epochs_list:
@@ -121,11 +121,21 @@ class Trainer:
                             callbacks=[LogEpoch()]  # İlk ve son epoch loglama
                         )
 
-                        # Tahmin yap ve metrikleri değerlendir
-                        y_pred = (ann_model.predict(self.X_test) > 0.5).astype(int).flatten()
-                        evaluator = MetricsEvaluator(self.y_test, y_pred)
-                        metrics = evaluator.get_metrics()
-                        metrics_list.append(["ANN", lr, epochs, hidden_layers, optimizer_name, metrics])
+                        # Eğitim seti için tahmin ve metrikler
+                        y_pred_train = (ann_model.predict(self.X_train) > 0.5).astype(int).flatten()
+                        train_evaluator = MetricsEvaluator(self.y_train, y_pred_train)
+                        train_metrics = train_evaluator.get_metrics()
+
+                        # Validation seti için tahmin ve metrikler
+                        y_pred_val = (ann_model.predict(self.X_val) > 0.5).astype(int).flatten()
+                        val_evaluator = MetricsEvaluator(self.y_val, y_pred_val)
+                        val_metrics = val_evaluator.get_metrics()
+
+                        # Metrikleri listeye ekle
+                        self.metrics_list.append([
+                            "ANN", lr, epochs, hidden_layers, optimizer_name,
+                            train_metrics, val_metrics
+                        ])
 
                         # Kayıp grafiğini kaydet
                         self.visualizer.plot_loss(
@@ -167,7 +177,6 @@ class Trainer:
         Parametreler:
         kernel_params -- Çekirdek türleri ve parametrelerinin sözlüğü
         """
-        metrics_list = []
 
         for kernel, params in kernel_params.items():
             for C in params.get("C", [1]):
@@ -180,11 +189,21 @@ class Trainer:
                         svm_model = svm_builder.build_model()
                         svm_model.fit(self.X_train, self.y_train)
 
-                        # Tahmin yap ve metrikleri değerlendir
-                        y_pred = svm_model.predict(self.X_test)
-                        evaluator = MetricsEvaluator(self.y_test, y_pred)
-                        metrics = evaluator.get_metrics()
-                        metrics_list.append(["SVM", kernel, C, degree, gamma, metrics])
+                        # Eğitim seti için tahmin ve metrikler
+                        y_pred_train = svm_model.predict(self.X_train)
+                        train_evaluator = MetricsEvaluator(self.y_train, y_pred_train)
+                        train_metrics = train_evaluator.get_metrics()
+
+                        # Validation seti için tahmin ve metrikler
+                        y_pred_val = svm_model.predict(self.X_val)
+                        val_evaluator = MetricsEvaluator(self.y_val, y_pred_val)
+                        val_metrics = val_evaluator.get_metrics()
+
+                        # Metrikleri listeye ekle
+                        self.metrics_list.append([
+                            "SVM", kernel, C, degree, gamma,
+                            train_metrics, val_metrics
+])
 
                         # Karar sınırlarını kaydet
                         decision_boundary_path = os.path.join(
@@ -196,7 +215,10 @@ class Trainer:
                             X=self.X_val,
                             y=self.y_val,
                             save_path=decision_boundary_path,
-                            model_type="SVM"
+                            model_type="SVM",
+                            kernel,
+                            degree
+
                         )
 
                         # Modeli kaydet
@@ -207,36 +229,52 @@ class Trainer:
                         joblib.dump(svm_model, model_path)
 
         print("SVM training complete.")
+
     def save_combined_metrics(self):
-            """
-            Tüm eğitim metriklerini birleştirir ve dosyaya kaydeder.
-            """
-            print("\nSaving combined metrics...")
-            with open(self.metrics_path, "w") as file:
-                header = "{:<8} {:<12} {:<8} {:<8} {:<14} {:<10} {:<10} {:<10} {:<10}\n"
-                file.write(header.format("Model", "Param1", "Param2", "Param3", "Param4", "Accuracy", "Precision", "Recall", "F1-Score"))
+        """
+        Tüm eğitim ve doğrulama metriklerini birleştirir ve dosyaya kaydeder.
+        """
+        print("\nSaving combined metrics...")
+        with open(self.metrics_path, "w") as file:
+            header = "{:<8} {:<12} {:<8} {:<8} {:<14} {:<10} {:<10} {:<10} {:<10} {:<10} {:<10} {:<10} {:<10}\n"
+            file.write(header.format(
+                "Model", "Param1", "Param2", "Param3", "Param4",
+                "Train_Acc", "Train_Prec", "Train_Recall", "Train_F1",
+                "Val_Acc", "Val_Prec", "Val_Recall", "Val_F1"
+            ))
 
-                for entry in self.metrics_list:
-                    model_type, p1, p2, p3, p4, metrics = entry
-                    row = "{:<8} {:<12} {:<8} {:<8} {:<14} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f}\n"
-                    file.write(row.format(model_type, p1, p2, p3, p4, metrics['accuracy'], metrics['precision'], metrics['recall'], metrics['f1_score']))
+            for entry in self.metrics_list:
+                model_type, p1, p2, p3, p4, train_metrics, val_metrics = entry
+                row = "{:<8} {:<12} {:<8} {:<8} {:<14} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f}\n"
+                file.write(row.format(
+                    model_type, p1, p2, p3, p4,
+                    train_metrics['accuracy'], train_metrics['precision'], train_metrics['recall'], train_metrics['f1_score'],
+                    val_metrics['accuracy'], val_metrics['precision'], val_metrics['recall'], val_metrics['f1_score']
+                ))
 
-            print(f"Combined metrics saved to {self.metrics_path}.")
+        print(f"Combined metrics saved to {self.metrics_path}.")
 
     def finalize(self):
-            """
-            Log dosyasını düzgün şekilde kapatır.
-            """
-            sys.stdout = sys.__stdout__
+        """
+        Log dosyasını düzgün şekilde kapatır.
+        """
+        sys.stdout = sys.__stdout__
+        if hasattr(self, "log_file") and self.log_file: 
             self.log_file.close()
-            print("Log file closed. Training complete.")
+        print("Log file closed. Training complete.")
+
+            
 if __name__ == "__main__":
     trainer = Trainer()
     trainer.prepare_data()
 
     # ANN Eğitim Ayarları
-    learning_rates = [0.001, 0.01, 0.05, 0.1]
-    epochs_list = [50, 100, 500]
+    learning_rates = [0.1]
+        # learning_rates = [0.0001,0.001,0.01, 0.1]
+
+    epochs_list = [50]
+        # epochs_list = [50, 250, 500,1000]
+
     optimizers = {"SGD": 1, "BGD": len(trainer.X_train), "MBGD": 32}
     layer_configurations = [1, 2, 3]
 
