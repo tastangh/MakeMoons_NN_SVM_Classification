@@ -74,60 +74,74 @@ class Visualizer:
             save_file = f"{set_name}_seti.png"
             self.plot_individual(X, y, title, save_file)
 
-    def plot_loss(self, history, optimizer_name, hidden_layers, save_dir, file_name="loss_plot.png"):
+
+    def plot_loss(self, history, learning_rate, epochs, optimizer_name, hidden_layers, save_dir):
         """
-        Eğitim ve doğrulama kayıplarını epoch bazında çizer ve kaydeder.
+        Eğitim ve doğrulama kayıplarını epoch bazında çizer.
 
         Args:
-        - history: Modelin eğitim geçmişi (Keras History nesnesi).
-        - optimizer_name (str): Optimizasyon yöntemi (örn. "SGD", "Batch GD").
+        - history: Model eğitim geçmişi.
+        - learning_rate (float): Öğrenme oranı.
+        - epochs (int): Epoch sayısı.
+        - optimizer_name (str): Optimizasyon algoritması.
         - hidden_layers (int): Gizli katman sayısı.
-        - save_dir (str): Grafiklerin kaydedileceği dizin.
-        - file_name (str): Kaydedilecek dosya adı.
+        - save_dir (str): Kayıt dizini.
         """
         os.makedirs(save_dir, exist_ok=True)
-        file_path = os.path.join(save_dir, file_name)
-
+        file_name = f"loss_LR{learning_rate}_Epochs{epochs}_Opt{optimizer_name}_Layers{hidden_layers}.png"
+        title = (f"Kayıp Grafiği - LR: {learning_rate}, Epochs: {epochs}, "
+                 f"Optimizer: {optimizer_name}, Layers: {hidden_layers}")
+        
         plt.figure(figsize=(10, 6))
         plt.plot(history.history["loss"], label="Eğitim Kaybı", marker='o')
         plt.plot(history.history["val_loss"], label="Doğrulama Kaybı", marker='x')
         plt.xlabel("Epoch")
         plt.ylabel("Kayıp (Loss)")
-        plt.title(f"{optimizer_name} - {hidden_layers} Gizli Katman")
+        plt.title(title)
         plt.legend()
-        plt.savefig(file_path)
+        plt.savefig(os.path.join(save_dir, file_name))
         plt.close()
 
-    def plot_decision_boundary(self, model, X, y, save_path, model_type="ANN"):
+     def plot_decision_boundary(self, model, X, y, save_path, model_type="ANN", **kwargs):
         """
-        Karar sınırlarını çizer ve kaydeder.
+        Modelin karar sınırını çizer ve belirtilen dosya yoluna kaydeder.
 
         Args:
-        - model: Eğitimli model (ANN veya SVM)
-        - X: Özellikler
-        - y: Etiketler
-        - save_path: Kaydedilecek dosya yolu
-        - model_type: Model türü ("ANN" veya "SVM")
+            model: Eğitimli model (ANN veya SVM).
+            X: Test veri kümesi (özellikler).
+            y: Test veri kümesi (etiketler).
+            save_path: Karar sınırının kaydedileceği dosya yolu.
+            model_type: Model tipi ("ANN" veya "SVM").
+            **kwargs: Ek parametreler (LR, Epoch, Kernel gibi).
         """
         x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
         y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
-        xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.01),
-                             np.arange(y_min, y_max, 0.01))
+        xx, yy = np.meshgrid(np.linspace(x_min, x_max, 100), np.linspace(y_min, y_max, 100))
+        grid = np.c_[xx.ravel(), yy.ravel()]
 
         if model_type == "ANN":
-            Z = model.predict(np.c_[xx.ravel(), yy.ravel()]).flatten()
-            Z = Z.reshape(xx.shape)
+            Z = (model.predict(grid) > 0.5).astype(int)
         elif model_type == "SVM":
-            Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
-            Z = Z.reshape(xx.shape)
+            Z = model.predict(grid)
+        else:
+            raise ValueError("Geçersiz model tipi: 'ANN' veya 'SVM' olmalı.")
 
+        Z = Z.reshape(xx.shape)
+        
+        # Karar sınırı çizimi
         plt.figure(figsize=(8, 6))
-        plt.contourf(xx, yy, Z, alpha=0.3, cmap="coolwarm")  
-        plt.scatter(X[:, 0], X[:, 1], c=y, cmap="coolwarm", edgecolors='k')  
-        plt.title(f"{model_type} Decision Boundary")
+        plt.contourf(xx, yy, Z, alpha=0.3)
+        plt.scatter(X[:, 0], X[:, 1], c=y, edgecolors='k', marker='o')
+        
+        # Grafik başlığını detaylandırma
+        title_details = ", ".join([f"{key}={value}" for key, value in kwargs.items()])
+        plt.title(f"Decision Boundary ({model_type}) - {title_details}")
+        
+        plt.xlabel("Feature 1")
+        plt.ylabel("Feature 2")
+        plt.tight_layout()
         plt.savefig(save_path)
         plt.close()
-
     def plot_confusion_matrix(self, cm, class_labels, title, save_path):
         """
         Confusion matrix'i görselleştirir.
@@ -145,7 +159,7 @@ class Visualizer:
         plt.title(title)
         plt.savefig(save_path)
         plt.close()
-        
+
     def plot_model_comparison(self, ann_metrics, svm_metrics, save_path):
         """
         ANN ve SVM modellerinin metriklerini bar grafiği ile karşılaştırır.

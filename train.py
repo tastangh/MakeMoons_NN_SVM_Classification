@@ -100,16 +100,25 @@ for lr in learning_rates:
                 model_types.append("ANN")
 
                 # Save loss plot
-                loss_plot_path = os.path.join(LOSS_PLOTS_DIR, f"ann_loss_LR{lr}_Epoch{epochs}_Opt{optimizer_name}_Layers{hidden_layers}.png")
-                visualizer.plot_loss(history, optimizer_name, hidden_layers, LOSS_PLOTS_DIR, os.path.basename(loss_plot_path))
-                
+                visualizer.plot_loss(
+                    history=history,
+                    learning_rate=lr,
+                    epochs=epochs,
+                    optimizer_name=optimizer_name,
+                    hidden_layers=hidden_layers,
+                    save_dir=LOSS_PLOTS_DIR
+                )
+
                 # Save decision boundary
-                decision_boundary_path = os.path.join(DECISION_PLOTS_DIR, f"ann_decision_boundary_LR{lr}_Epoch{epochs}_Opt{optimizer_name}_Layers{hidden_layers}.png")
                 visualizer.plot_decision_boundary(
                     model=ann_model,
                     X=X_test,
                     y=y_test,
-                    save_path=decision_boundary_path,
+                    save_dir=DECISION_PLOTS_DIR,
+                    learning_rate=lr,
+                    epochs=epochs,
+                    optimizer_name=optimizer_name,
+                    hidden_layers=hidden_layers,
                     model_type="ANN"
                 )
 
