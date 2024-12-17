@@ -60,30 +60,3 @@ class DatasetProcessor:
         }
         return self.splits
 
-    def save_dataset(self, path="dataset.csv"):
-        """
-        Veri setini CSV formatında kaydeder.
-
-        Args:
-        - path (str): Kaydedilecek dosya yolu (default: "dataset.csv").
-        """
-        if self.dataset is None:
-            raise ValueError("Dataset is not created yet. Call create_dataset() first.")
-        self.dataset.to_csv(path, index=False)
-        print(f"Dataset saved to {path}.")
-
-    def load_dataset(self, path="dataset.csv"):
-        """
-        CSV formatındaki veri setini yükler.
-
-        Args:
-        - path (str): Yüklenecek dosya yolu (default: "dataset.csv").
-
-        Returns:
-        - dataset (pd.DataFrame): Yüklenen veri seti.
-        """
-        if not os.path.exists(path):
-            raise FileNotFoundError(f"Dataset file not found at {path}.")
-        self.dataset = pd.read_csv(path)
-        print(f"Dataset loaded from {path}.")
-        return self.dataset
