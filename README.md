@@ -1,6 +1,10 @@
 # MakeMoons_NN_SVM_Classification
 MakeMoons_NN_SVM_Classification
 
+
+Proje klasöründe (MakeMoons_NN_SVM_Classification) aşağıdaki komut ile virtual env çalıştırılır.
+source hw2env/bin/activate
+
 /MakeMoons_NN_SVM_Classification
     ├── dataset.py         # Veri kümesi oluşturma ve ayırma işlemleri.
     ├── ann_model.py       # Yapay Sinir Ağı modeli tanımlama ve kaydetme/yükleme işlevleri.
