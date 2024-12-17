@@ -8,20 +8,23 @@ from svm_model import SVMModel
 from metrics import MetricsEvaluator
 import tensorflow as tf
 
-# Redirect stdout to a file as well as console
-log_file_path = "training_log.txt"
 class Tee:
     def __init__(self, *files):
         self.files = files
 
     def write(self, obj):
         for f in self.files:
-            f.write(obj)
-            f.flush()
+            if not f.closed:  # Dosya kapalı değilse yaz
+                f.write(obj)
+                f.flush()
 
     def flush(self):
         for f in self.files:
-            f.flush()
+            try:
+                if not f.closed:
+                    f.flush()
+            except ValueError:
+                pass  # Dosya zaten kapalıysa hata görmezden gel
 
 # Redirect output
 log_file = open(log_file_path, "w")
@@ -50,7 +53,8 @@ visualizer.plot_splits(splits)
 
 # Step 2: ANN Training with SGD, BGD, MBGD
 learning_rates = [0.001, 0.01, 0.05, 0.1]
-epochs_list = [50, 100, 500, 1000]
+epochs_list = [50]
+# epochs_list = [50, 100, 500, 1000]
 optimizers = {"SGD": 1, "BGD": len(X_train), "MBGD": 32}
 layer_configurations = [1, 2, 3]
 
@@ -101,7 +105,9 @@ for lr in learning_rates:
                 os.makedirs(result_path, exist_ok=True)
 
                 visualizer.plot_loss(history, optimizer_name=optimizer_name, hidden_layers=hidden_layers, save_dir=result_path)
-                ann_model.save(os.path.join(result_path, f"ann_model.h5"))
+
+                # Modeli .keras formatında kaydet
+                ann_model.save(os.path.join(result_path, f"ann_model.keras"))
 
                 # Update best model based on validation loss
                 if val_loss < best_ann_val_loss:
@@ -142,64 +148,31 @@ for kernel, params in kernel_params.items():
                     best_svm_accuracy = val_accuracy
                     best_svm_model = svm_model
 
-# Step 4: Evaluate the Best Models
-print("\nEvaluating the best models...")
+# Step 4: Save Metrics to Text File
+metrics_txt_path = os.path.join(SAVE_DIR, "combined_metrics.txt")
+with open(metrics_txt_path, "w") as file:
+    # Sabit sütun genişliklerini belirle
+    header_format = "{:<12} {:<8} {:<8} {:<14} {:<10} {:<10} {:<10} {:<10}\n"
+    row_format = "{:<12} {:<8.4f} {:<8} {:<14} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f}\n"
 
-# ANN Evaluation
-if best_ann_model:
-    print("Evaluating the best ANN model...")
-    ann_y_pred = (best_ann_model.predict(X_test) > 0.5).astype(int).flatten()
-    ann_evaluator = MetricsEvaluator(y_test, ann_y_pred)
-    ann_metrics = ann_evaluator.get_metrics()
-    ann_evaluator.pretty_print()
-    visualizer.plot_confusion_matrix(
-        cm=ann_metrics["confusion_matrix"],
-        class_labels=["Class 0", "Class 1"],
-        title="Best ANN Confusion Matrix",
-        save_path=os.path.join(SAVE_DIR, "best_ann_confusion_matrix.png")
-    )
-    visualizer.plot_decision_boundary(
-        model=best_ann_model,
-        X=X_test,
-        y=y_test,
-        save_path=os.path.join(SAVE_DIR, "best_ann_decision_boundary.png"),
-        model_type="ANN"
-    )
+    # Başlıkları yaz
+    file.write(header_format.format("Optimizer", "LR", "Epochs", "Hidden Layers", "Accuracy", "Precision", "Recall", "F1-Score"))
 
-# SVM Evaluation
-if best_svm_model:
-    print("Evaluating the best SVM model...")
-    svm_y_pred = best_svm_model.predict(X_test)
-    svm_evaluator = MetricsEvaluator(y_test, svm_y_pred)
-    svm_metrics = svm_evaluator.get_metrics()
-    svm_evaluator.pretty_print()
-    visualizer.plot_confusion_matrix(
-        cm=svm_metrics["confusion_matrix"],
-        class_labels=["Class 0", "Class 1"],
-        title="Best SVM Confusion Matrix",
-        save_path=os.path.join(SAVE_DIR, "best_svm_confusion_matrix.png")
-    )
-    visualizer.plot_decision_boundary(
-        model=best_svm_model,
-        X=X_test,
-        y=y_test,
-        save_path=os.path.join(SAVE_DIR, "best_svm_decision_boundary.png"),
-        model_type="SVM"
-    )
+    # Her bir satır için veriyi yaz
+    for i, metrics in enumerate(metrics_list):
+        file.write(row_format.format(
+            optimizer_names[i],
+            lrs[i],
+            epochs_list_final[i],
+            hidden_layers_list[i],
+            metrics['accuracy'],
+            metrics['precision'],
+            metrics['recall'],
+            metrics['f1_score']
+        ))
 
-# Step 5: Combined Metrics Table
-print("Generating combined metrics table...")
-metrics_table_path = os.path.join(SAVE_DIR, "combined_metrics_table.png")
-visualizer.plot_combined_metrics_table(
-    metrics_list=metrics_list,
-    optimizer_names=optimizer_names,
-    hidden_layers_list=hidden_layers_list,
-    lrs=lrs,
-    epochs_list=epochs_list_final,
-    save_path=metrics_table_path
-)
+print("\nTraining complete! Combined metrics saved to text file.")
 
-print("\nTraining and evaluation complete! All results saved in the 'results' and 'models' directories.")
-
-# Close log file
+#  Reset stdout and close log file
+sys.stdout = sys.__stdout__
 log_file.close()

@@ -1,6 +1,5 @@
-
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Dense, Input
 from tensorflow.keras.optimizers import SGD
 
 class ANNModel:
@@ -34,8 +33,11 @@ class ANNModel:
         # Modeli oluştur
         model = Sequential()
 
+        # Giriş katmanını Input layer ile tanımla
+        model.add(Input(shape=(self.input_dim,)))
+
         # İlk gizli katman
-        model.add(Dense(self.hidden_units, activation='sigmoid', input_dim=self.input_dim))
+        model.add(Dense(self.hidden_units, activation='sigmoid'))
 
         # Ek gizli katmanlar
         for _ in range(self.hidden_layers - 1):

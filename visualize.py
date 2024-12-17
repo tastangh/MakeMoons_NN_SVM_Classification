@@ -38,7 +38,7 @@ class Visualizer:
 
         save_path = os.path.join(self.save_dir, "tum_veri_seti.png")
         plt.savefig(save_path)
-      #  plt.show()
+        plt.close()
 
     def plot_individual(self, X, y, title, save_file):
         """
@@ -60,7 +60,7 @@ class Visualizer:
 
         save_path = os.path.join(self.save_dir, save_file)
         plt.savefig(save_path)
-      #  plt.show()
+        plt.close()
 
     def plot_splits(self, splits):
         """
@@ -97,9 +97,6 @@ class Visualizer:
         plt.legend()
         plt.savefig(file_path)
         plt.close()
-      #  plt.show()
-
-
 
     def plot_decision_boundary(self, model, X, y, save_path, model_type="ANN"):
         """
@@ -119,15 +116,17 @@ class Visualizer:
 
         if model_type == "ANN":
             Z = model.predict(np.c_[xx.ravel(), yy.ravel()]).flatten()
+            Z = Z.reshape(xx.shape)
         elif model_type == "SVM":
             Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
+            Z = Z.reshape(xx.shape)
 
-        Z = Z.reshape(xx.shape)
-        plt.contourf(xx, yy, Z, alpha=0.8)
-        plt.scatter(X[:, 0], X[:, 1], c=y, edgecolors='k', marker='o')
+        plt.figure(figsize=(8, 6))
+        plt.contourf(xx, yy, Z, alpha=0.3, cmap="coolwarm")  
+        plt.scatter(X[:, 0], X[:, 1], c=y, cmap="coolwarm", edgecolors='k')  
         plt.title(f"{model_type} Decision Boundary")
         plt.savefig(save_path)
-      #  plt.show()
+        plt.close()
 
     def plot_confusion_matrix(self, cm, class_labels, title, save_path):
         """
@@ -145,51 +144,8 @@ class Visualizer:
         plt.ylabel("Gerçek")
         plt.title(title)
         plt.savefig(save_path)
-      #  plt.show()
-
-    def plot_combined_metrics_table(self, metrics_list, optimizer_names, hidden_layers_list, lrs, epochs_list, save_path):
-        """
-        Birden fazla metrik setini düzenli bir tablo halinde çizer ve kaydeder.
-
-        Args:
-        - metrics_list: Her bir optimizasyon yöntemi ve gizli katman sayısı için metrik değerlerini içeren liste.
-        - optimizer_names: Optimizasyon yöntemlerinin isimleri (örn. ["SGD", "MBGD", "BGD"]).
-        - hidden_layers_list: Her metrik setine karşılık gelen gizli katman sayıları.
-        - lrs: Learning rate değerlerinin listesi.
-        - epochs_list: Epoch değerlerinin listesi.
-        - save_path: Kaydedilecek dosya yolu.
-        """
-        # Tablo başlıkları
-        headers = ["Optimizer", "LR", "Epochs", "Hidden Layers", "Accuracy", "Precision", "Recall", "F1-Score"]
-
-        # Tablo satırları için veri
-        rows = []
-        for i, metrics in enumerate(metrics_list):
-            rows.append([
-                optimizer_names[i],
-                f"{lrs[i]:.4f}",
-                epochs_list[i],
-                hidden_layers_list[i],
-                f"{metrics['accuracy']:.2f}",
-                f"{metrics['precision']:.2f}",
-                f"{metrics['recall']:.2f}",
-                f"{metrics['f1_score']:.2f}"
-            ])
-
-        # Grafiksel tablo oluşturma
-        plt.figure(figsize=(16, 10))
-        plt.axis("off")
-        plt.title("Combined Metrics Table", fontsize=16, fontweight="bold")
-
-        table = plt.table(cellText=rows, colLabels=headers, loc="center", cellLoc="center", colLoc="center")
-        table.auto_set_font_size(False)
-        table.set_fontsize(10)
-        table.auto_set_column_width(col=list(range(len(headers))))
-
-        # Kaydet ve göster
-        plt.savefig(save_path)
         plt.close()
-
+        
     def plot_model_comparison(self, ann_metrics, svm_metrics, save_path):
         """
         ANN ve SVM modellerinin metriklerini bar grafiği ile karşılaştırır.
