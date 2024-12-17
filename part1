@@ -1,0 +1,69 @@
+import os
+import sys
+import joblib
+from dataset import DatasetProcessor
+from visualize import Visualizer
+from ann_model import ANNModel
+from svm_model import SVMModel
+from metrics import MetricsEvaluator
+import tensorflow as tf
+
+class LogEpoch(tf.keras.callbacks.Callback):
+    """Sadece ilk ve son epoch'taki train/val metriklerini loglamak için callback."""
+    def on_epoch_end(self, epoch, logs=None):
+        if epoch == 0 or epoch == self.params['epochs'] - 1:  # İlk ve son epoch
+            print(f"Epoch {epoch+1}/{self.params['epochs']} - "
+                  f"loss: {logs['loss']:.4f}, accuracy: {logs['accuracy']:.4f}, "
+                  f"val_loss: {logs['val_loss']:.4f}, val_accuracy: {logs['val_accuracy']:.4f}")
+
+# Redirect stdout to a file as well as console
+log_file_path = "training_log.txt"
+class Tee:
+    def __init__(self, *files):
+        self.files = files
+
+    def write(self, obj):
+        for f in self.files:
+            if not f.closed:
+                f.write(obj)
+                f.flush()
+
+    def flush(self):
+        for f in self.files:
+            try:
+                if not f.closed:
+                    f.flush()
+            except ValueError:
+                pass
+
+log_file = open(log_file_path, "w")
+sys.stdout = Tee(sys.stdout, log_file)
+
+# Constants
+SAVE_DIR = "train_results"
+MODEL_DIR = os.path.join(SAVE_DIR, "models")
+PLOTS_DIR = os.path.join(SAVE_DIR, "plots")
+LOSS_PLOTS_DIR = os.path.join(PLOTS_DIR, "loss")
+DECISION_PLOTS_DIR = os.path.join(PLOTS_DIR, "decision_boundaries")
+os.makedirs(SAVE_DIR, exist_ok=True)
+os.makedirs(MODEL_DIR, exist_ok=True)
+os.makedirs(LOSS_PLOTS_DIR, exist_ok=True)
+os.makedirs(DECISION_PLOTS_DIR, exist_ok=True)
+
+
+
+
+# Step 1: Dataset Preparation
+print("Creating and splitting the dataset...")
+dataset_processor = DatasetProcessor()
+dataset = dataset_processor.create_dataset()
+splits = dataset_processor.split_dataset()
+
+X_train, y_train = splits["train"]
+X_val, y_val = splits["validation"]
+X_test, y_test = splits["test"]
+
+# Visualize dataset
+visualizer = Visualizer(save_dir=PLOTS_DIR)
+visualizer.plot_all_data(dataset)
+visualizer.plot_splits(splits)
