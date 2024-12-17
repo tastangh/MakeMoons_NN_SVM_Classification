@@ -109,11 +109,11 @@ class Visualizer:
 
         Args:
             model: Eğitimli model (ANN veya SVM).
-            X:  veri kümesi (özellikler).
-            y:  veri kümesi (etiketler).
+            X: Veri kümesi (özellikler).
+            y: Veri kümesi (etiketler).
             save_path: Karar sınırının kaydedileceği dosya yolu.
             model_type: Model tipi ("ANN" veya "SVM").
-            **kwargs: Ek parametreler (LR, Epoch, Kernel gibi).
+            **kwargs: Ek parametreler (LR, Epoch, Kernel, Degree, Gamma gibi).
         """
         x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
         y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
@@ -135,7 +135,7 @@ class Visualizer:
         plt.contourf(xx, yy, Z, alpha=0.3, cmap="coolwarm")
         plt.scatter(X[:, 0], X[:, 1], c=y, cmap="coolwarm", edgecolors='k', marker='o')
 
-        # Başlık düzenlemesi (çok uzun başlıklar için)
+        # Başlık düzenlemesi: Model parametrelerini ekleyelim
         title_details = "\n".join([f"{key}={value}" for key, value in kwargs.items()])
         plt.title(f"Decision Boundary ({model_type})\n{title_details}", fontsize=10, wrap=True)
         
@@ -144,7 +144,6 @@ class Visualizer:
         plt.tight_layout()
         plt.savefig(save_path)
         plt.close()
-
 
     def plot_confusion_matrix(y_true, y_pred, save_path, title):
         """
