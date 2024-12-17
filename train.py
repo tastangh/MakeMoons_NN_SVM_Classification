@@ -16,22 +16,28 @@ class Tee:
 
     def write(self, obj):
         for f in self.files:
-            f.write(obj)
-            f.flush()
+            if not f.closed:
+                f.write(obj)
+                f.flush()
 
     def flush(self):
         for f in self.files:
-            f.flush()
+            try:
+                if not f.closed:
+                    f.flush()
+            except ValueError:
+                pass
 
-# Redirect output
 log_file = open(log_file_path, "w")
 sys.stdout = Tee(sys.stdout, log_file)
 
 # Constants
 SAVE_DIR = "results"
-MODEL_DIR = "models"
+MODEL_DIR = os.path.join(SAVE_DIR, "models")
+PLOTS_DIR = os.path.join(SAVE_DIR, "plots")
 os.makedirs(SAVE_DIR, exist_ok=True)
 os.makedirs(MODEL_DIR, exist_ok=True)
+os.makedirs(PLOTS_DIR, exist_ok=True)
 
 # Step 1: Dataset Preparation
 print("Creating and splitting the dataset...")
@@ -44,82 +50,54 @@ X_val, y_val = splits["validation"]
 X_test, y_test = splits["test"]
 
 # Visualize dataset
-visualizer = Visualizer(save_dir=SAVE_DIR)
+visualizer = Visualizer(save_dir=PLOTS_DIR)
 visualizer.plot_all_data(dataset)
 visualizer.plot_splits(splits)
 
-# Step 2: ANN Training with SGD, BGD, MBGD
+# Step 2: ANN Training
 learning_rates = [0.001, 0.01, 0.05, 0.1]
 epochs_list = [50]
-# epochs_list = [50, 100, 500, 1000]
 optimizers = {"SGD": 1, "BGD": len(X_train), "MBGD": 32}
 layer_configurations = [1, 2, 3]
 
-best_ann_model = None
-best_ann_val_loss = float("inf")
-
-# Collect data for the metrics table
 metrics_list = []
-optimizer_names = []
-hidden_layers_list = []
-lrs = []
-epochs_list_final = []
+model_types = []
 
 for lr in learning_rates:
     for epochs in epochs_list:
         for optimizer_name, batch_size in optimizers.items():
             for hidden_layers in layer_configurations:
                 print(f"Training ANN: LR={lr}, Epochs={epochs}, Optimizer={optimizer_name}, Layers={hidden_layers}...")
-
-                # Initialize and train the ANN model
                 ann_builder = ANNModel(input_dim=X_train.shape[1], hidden_layers=hidden_layers, learning_rate=lr)
                 ann_model = ann_builder.build_model()
-                
+
                 history = ann_model.fit(
                     X_train, y_train,
                     validation_data=(X_val, y_val),
                     epochs=epochs,
                     batch_size=batch_size,
-                    verbose=1
+                    verbose=0
                 )
 
-                # Calculate metrics
-                val_accuracy = max(history.history["val_accuracy"])
-                val_loss = min(history.history["val_loss"])
                 y_pred = (ann_model.predict(X_test) > 0.5).astype(int).flatten()
                 evaluator = MetricsEvaluator(y_test, y_pred)
                 metrics = evaluator.get_metrics()
+                metrics_list.append(["ANN", lr, epochs, hidden_layers, optimizer_name, metrics])
+                model_types.append("ANN")
 
-                # Append metrics and corresponding info
-                metrics_list.append(metrics)
-                optimizer_names.append(optimizer_name)
-                hidden_layers_list.append(hidden_layers)
-                lrs.append(lr)
-                epochs_list_final.append(epochs)
+                # Save loss plot
+                loss_plot_path = os.path.join(PLOTS_DIR, f"ann_loss_LR{lr}_Epoch{epochs}_Opt{optimizer_name}_Layers{hidden_layers}.png")
+                visualizer.plot_loss(history, optimizer_name, hidden_layers, PLOTS_DIR, os.path.basename(loss_plot_path))
 
-                # Save model and visualize results
-                result_path = os.path.join(SAVE_DIR, f"LR_{lr}_Epoch_{epochs}/Optimizer_{optimizer_name}/Layers_{hidden_layers}")
-                os.makedirs(result_path, exist_ok=True)
+                # Save model
+                model_path = os.path.join(MODEL_DIR, f"ann_model_LR{lr}_Epoch{epochs}_Opt{optimizer_name}_Layers{hidden_layers}.keras")
+                ann_model.save(model_path)
 
-                visualizer.plot_loss(history, optimizer_name=optimizer_name, hidden_layers=hidden_layers, save_dir=result_path)
-
-                # Modeli .keras formatında kaydet
-                ann_model.save(os.path.join(result_path, f"ann_model.keras"))
-
-                # Update best model based on validation loss
-                if val_loss < best_ann_val_loss:
-                    best_ann_val_loss = val_loss
-                    best_ann_model = ann_model
-
-# Step 3: SVM Training with Kernel Variations
-print("\nTraining SVM models with different kernels and parameters...")
-best_svm_model = None
-best_svm_accuracy = 0
-
+# Step 3: SVM Training
 kernel_params = {
-    "linear": {"C": [0.1, 1, 10]},
-    "poly": {"C": [0.1, 1], "degree": [2, 3]},
-    "rbf": {"C": [0.1, 1], "gamma": ["scale", "auto"]}
+    "linear": {"C": [0.1, 1]},
+    "poly": {"C": [0.1], "degree": [2]},
+    "rbf": {"C": [0.1], "gamma": ["scale"]}
 }
 
 for kernel, params in kernel_params.items():
@@ -127,49 +105,33 @@ for kernel, params in kernel_params.items():
         for degree in params.get("degree", [3]):
             for gamma in params.get("gamma", ["scale"]):
                 print(f"Training SVM: Kernel={kernel}, C={C}, Degree={degree}, Gamma={gamma}...")
-                
                 svm_builder = SVMModel(kernel=kernel, C=C, degree=degree, gamma=gamma)
                 svm_model = svm_builder.build_model()
                 svm_model.fit(X_train, y_train)
-                
-                # Evaluate on validation set
-                val_accuracy = svm_model.score(X_val, y_val)
-                print(f"Validation Accuracy: {val_accuracy:.4f}")
-                
-                result_path = os.path.join(SAVE_DIR, f"SVM_{kernel}_C_{C}_Degree_{degree}_Gamma_{gamma}")
-                os.makedirs(result_path, exist_ok=True)
 
-                # Save model and update best model
-                joblib.dump(svm_model, os.path.join(result_path, f"svm_model.pkl"))
-                if val_accuracy > best_svm_accuracy:
-                    best_svm_accuracy = val_accuracy
-                    best_svm_model = svm_model
+                y_pred = svm_model.predict(X_test)
+                evaluator = MetricsEvaluator(y_test, y_pred)
+                metrics = evaluator.get_metrics()
+                metrics_list.append(["SVM", kernel, C, degree, gamma, metrics])
+                model_types.append("SVM")
 
-# Step 4: Save Metrics to Text File
+                # Save model
+                model_path = os.path.join(MODEL_DIR, f"svm_model_{kernel}_C{C}_Degree{degree}_Gamma{gamma}.pkl")
+                joblib.dump(svm_model, model_path)
+
+# Step 4: Save Combined Metrics
 metrics_txt_path = os.path.join(SAVE_DIR, "combined_metrics.txt")
 with open(metrics_txt_path, "w") as file:
-    # Sabit sütun genişliklerini belirle
-    header_format = "{:<12} {:<8} {:<8} {:<14} {:<10} {:<10} {:<10} {:<10}\n"
-    row_format = "{:<12} {:<8.4f} {:<8} {:<14} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f}\n"
+    header = "{:<8} {:<12} {:<8} {:<8} {:<14} {:<10} {:<10} {:<10} {:<10}\n"
+    file.write(header.format("Model", "Param1", "Param2", "Param3", "Param4", "Accuracy", "Precision", "Recall", "F1-Score"))
 
-    # Başlıkları yaz
-    file.write(header_format.format("Optimizer", "LR", "Epochs", "Hidden Layers", "Accuracy", "Precision", "Recall", "F1-Score"))
-
-    # Her bir satır için veriyi yaz
-    for i, metrics in enumerate(metrics_list):
-        file.write(row_format.format(
-            optimizer_names[i],
-            lrs[i],
-            epochs_list_final[i],
-            hidden_layers_list[i],
-            metrics['accuracy'],
-            metrics['precision'],
-            metrics['recall'],
-            metrics['f1_score']
-        ))
+    for entry in metrics_list:
+        model_type, p1, p2, p3, p4, metrics = entry
+        row = "{:<8} {:<12} {:<8} {:<8} {:<14} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f}\n"
+        file.write(row.format(model_type , p1, p2, p3, p4, metrics['accuracy'], metrics['precision'], metrics['recall'], metrics['f1_score']))
 
 print("\nTraining complete! Combined metrics saved to text file.")
 
-#  Reset stdout and close log file
+# Reset stdout and close log file
 sys.stdout = sys.__stdout__
 log_file.close()
