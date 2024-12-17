@@ -102,7 +102,7 @@ class Visualizer:
         plt.savefig(os.path.join(save_dir, file_name))
         plt.close()
 
-     def plot_decision_boundary(self, model, X, y, save_path, model_type="ANN", **kwargs):
+    def plot_decision_boundary(self, model, X, y, save_path, model_type="ANN", **kwargs):
         """
         Modelin karar sınırını çizer ve belirtilen dosya yoluna kaydeder.
 
@@ -116,32 +116,32 @@ class Visualizer:
         """
         x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
         y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
-        xx, yy = np.meshgrid(np.linspace(x_min, x_max, 100), np.linspace(y_min, y_max, 100))
+        xx, yy = np.meshgrid(np.linspace(x_min, x_max, 200), np.linspace(y_min, y_max, 200))
         grid = np.c_[xx.ravel(), yy.ravel()]
 
+        # Model tahminleri
         if model_type == "ANN":
-            Z = (model.predict(grid) > 0.5).astype(int)
+            Z = (model.predict(grid).ravel() > 0.5).astype(int)
         elif model_type == "SVM":
             Z = model.predict(grid)
         else:
             raise ValueError("Geçersiz model tipi: 'ANN' veya 'SVM' olmalı.")
 
         Z = Z.reshape(xx.shape)
-        
-        # Karar sınırı çizimi
+
+        # Grafik çizimi
         plt.figure(figsize=(8, 6))
-        plt.contourf(xx, yy, Z, alpha=0.3)
-        plt.scatter(X[:, 0], X[:, 1], c=y, edgecolors='k', marker='o')
+        plt.contourf(xx, yy, Z, alpha=0.3, cmap="coolwarm")
+        plt.scatter(X[:, 0], X[:, 1], c=y, cmap="coolwarm", edgecolors='k', marker='o')
         
-        # Grafik başlığını detaylandırma
         title_details = ", ".join([f"{key}={value}" for key, value in kwargs.items()])
         plt.title(f"Decision Boundary ({model_type}) - {title_details}")
-        
         plt.xlabel("Feature 1")
         plt.ylabel("Feature 2")
         plt.tight_layout()
         plt.savefig(save_path)
         plt.close()
+
     def plot_confusion_matrix(self, cm, class_labels, title, save_path):
         """
         Confusion matrix'i görselleştirir.
