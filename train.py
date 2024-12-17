@@ -8,6 +8,14 @@ from svm_model import SVMModel
 from metrics import MetricsEvaluator
 import tensorflow as tf
 
+class LogEpoch(tf.keras.callbacks.Callback):
+    """Sadece ilk ve son epoch'taki train/val metriklerini loglamak için callback."""
+    def on_epoch_end(self, epoch, logs=None):
+        if epoch == 0 or epoch == self.params['epochs'] - 1:  # İlk ve son epoch
+            print(f"Epoch {epoch+1}/{self.params['epochs']} - "
+                  f"loss: {logs['loss']:.4f}, accuracy: {logs['accuracy']:.4f}, "
+                  f"val_loss: {logs['val_loss']:.4f}, val_accuracy: {logs['val_accuracy']:.4f}")
+
 # Redirect stdout to a file as well as console
 log_file_path = "training_log.txt"
 class Tee:
@@ -35,9 +43,13 @@ sys.stdout = Tee(sys.stdout, log_file)
 SAVE_DIR = "results"
 MODEL_DIR = os.path.join(SAVE_DIR, "models")
 PLOTS_DIR = os.path.join(SAVE_DIR, "plots")
+LOSS_PLOTS_DIR = os.path.join(PLOTS_DIR, "loss")
+DECISION_PLOTS_DIR = os.path.join(PLOTS_DIR, "decision_boundaries")
 os.makedirs(SAVE_DIR, exist_ok=True)
 os.makedirs(MODEL_DIR, exist_ok=True)
-os.makedirs(PLOTS_DIR, exist_ok=True)
+os.makedirs(LOSS_PLOTS_DIR, exist_ok=True)
+os.makedirs(DECISION_PLOTS_DIR, exist_ok=True)
+
 
 # Step 1: Dataset Preparation
 print("Creating and splitting the dataset...")
@@ -76,8 +88,10 @@ for lr in learning_rates:
                     validation_data=(X_val, y_val),
                     epochs=epochs,
                     batch_size=batch_size,
-                    verbose=0
+                    verbose=0,  # Ara logları kapat
+                    callbacks=[LogEpoch()]  # İlk ve son epoch loglama
                 )
+
 
                 y_pred = (ann_model.predict(X_test) > 0.5).astype(int).flatten()
                 evaluator = MetricsEvaluator(y_test, y_pred)
@@ -86,8 +100,18 @@ for lr in learning_rates:
                 model_types.append("ANN")
 
                 # Save loss plot
-                loss_plot_path = os.path.join(PLOTS_DIR, f"ann_loss_LR{lr}_Epoch{epochs}_Opt{optimizer_name}_Layers{hidden_layers}.png")
-                visualizer.plot_loss(history, optimizer_name, hidden_layers, PLOTS_DIR, os.path.basename(loss_plot_path))
+                loss_plot_path = os.path.join(LOSS_PLOTS_DIR, f"ann_loss_LR{lr}_Epoch{epochs}_Opt{optimizer_name}_Layers{hidden_layers}.png")
+                visualizer.plot_loss(history, optimizer_name, hidden_layers, LOSS_PLOTS_DIR, os.path.basename(loss_plot_path))
+                
+                # Save decision boundary
+                decision_boundary_path = os.path.join(DECISION_PLOTS_DIR, f"ann_decision_boundary_LR{lr}_Epoch{epochs}_Opt{optimizer_name}_Layers{hidden_layers}.png")
+                visualizer.plot_decision_boundary(
+                    model=ann_model,
+                    X=X_test,
+                    y=y_test,
+                    save_path=decision_boundary_path,
+                    model_type="ANN"
+                )
 
                 # Save model
                 model_path = os.path.join(MODEL_DIR, f"ann_model_LR{lr}_Epoch{epochs}_Opt{optimizer_name}_Layers{hidden_layers}.keras")
@@ -114,6 +138,16 @@ for kernel, params in kernel_params.items():
                 metrics = evaluator.get_metrics()
                 metrics_list.append(["SVM", kernel, C, degree, gamma, metrics])
                 model_types.append("SVM")
+
+                # Save decision boundary
+                decision_boundary_path = os.path.join(DECISION_PLOTS_DIR, f"svm_decision_boundary_{kernel}_C{C}_Degree{degree}_Gamma{gamma}.png")
+                visualizer.plot_decision_boundary(
+                    model=svm_model,
+                    X=X_test,
+                    y=y_test,
+                    save_path=decision_boundary_path,
+                    model_type="SVM"
+                )
 
                 # Save model
                 model_path = os.path.join(MODEL_DIR, f"svm_model_{kernel}_C{C}_Degree{degree}_Gamma{gamma}.pkl")
