@@ -108,8 +108,8 @@ class Visualizer:
 
         Args:
             model: Eğitimli model (ANN veya SVM).
-            X: Test veri kümesi (özellikler).
-            y: Test veri kümesi (etiketler).
+            X:  veri kümesi (özellikler).
+            y:  veri kümesi (etiketler).
             save_path: Karar sınırının kaydedileceği dosya yolu.
             model_type: Model tipi ("ANN" veya "SVM").
             **kwargs: Ek parametreler (LR, Epoch, Kernel gibi).

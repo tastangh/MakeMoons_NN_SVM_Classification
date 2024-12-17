@@ -40,7 +40,7 @@ log_file = open(log_file_path, "w")
 sys.stdout = Tee(sys.stdout, log_file)
 
 # Constants
-SAVE_DIR = "results"
+SAVE_DIR = "train_results"
 MODEL_DIR = os.path.join(SAVE_DIR, "models")
 PLOTS_DIR = os.path.join(SAVE_DIR, "plots")
 LOSS_PLOTS_DIR = os.path.join(PLOTS_DIR, "loss")
@@ -116,9 +116,9 @@ for lr in learning_rates:
                 )
                 visualizer.plot_decision_boundary(
                     model=ann_model,
-                    X=X_test,
-                    y=y_test,
-                    save_path=decision_boundary_path,  # Doğru parametre adı
+                    X=X_val,
+                    y=y_val,
+                    save_path=decision_boundary_path,
                     model_type="ANN",
                     learning_rate=lr,
                     epochs=epochs,
@@ -159,12 +159,11 @@ for kernel, params in kernel_params.items():
                 )
                 visualizer.plot_decision_boundary(
                     model=svm_model,
-                    X=X_test,
-                    y=y_test,
-                    save_path=decision_boundary_path,  # Doğru parametre adı
+                    X=X_val,
+                    y=y_val,
+                    save_path=decision_boundary_path,
                     model_type="SVM"
                 )
-
                 # Save model
                 model_path = os.path.join(MODEL_DIR, f"svm_model_{kernel}_C{C}_Degree{degree}_Gamma{gamma}.pkl")
                 joblib.dump(svm_model, model_path)
