@@ -58,10 +58,10 @@ MakeMoons_NN_SVM_Classification/
     ├── dataset/                  # Veri kümesi ve görselleştirilmeleri
     ├── train_results/            # Eğitim çıktıları ve görseller
         ├── models                # Eğitilen modeller
-        ├── plots                 # Eğitim Görselleri (Kayıp Grafikleri,Confusion matrixleri ve KararSınırı Görselleri)
-        |── combined_metrics.txt  # Eğitim Metrikleri (Model ve hiperparemetre bazlı train ve val sonuçları tablosu)
+        ├── plots                 # Eğitim Görselleri 
+        |── combined_metrics.txt  # Eğitim Metrikleri 
         |── train.log             # Eğitim Logları
     ├── evaluation_results/       # Değerlendirme çıktıları
-        ├── plots                 # Değerlendirme Görselleri (Confusion matrixleri ve Karar Sınırı Görselleri)
-        |── combined_metrics.txt  # Değerlendirme Metrikleri (Model ve hiperparemetre bazlı test sonuçları tablosu)
+        ├── plots                 # Değerlendirme Görselleri 
+        |── combined_metrics.txt  # Değerlendirme Metrikleri 
 
