@@ -207,22 +207,25 @@ if __name__ == "__main__":
     )
 
     # SVM Değerlendirme Ayarları
-    kernel_params = {
-        "linear": {"C": [0.1, 1]},
-        "poly": {"C": [0.1], "degree": [2]},
-        "rbf": {"C": [0.1], "gamma": ["scale"]}
-    }
-    #     kernel_params = {
-    #     "linear": {"C": [0.01, 0.1, 1, 10, 100]}, 
-    #     "poly": {
-    #         "C": [0.01, 0.1, 1, 10], 
-    #         "degree": [2, 3, 4], 
-    #         "gamma": ["scale", "auto"] 
-    #     "rbf": {
-    #         "C": [0.01, 0.1, 1, 10, 100], 
-    #         "gamma": ["scale", "auto", 0.01, 0.1, 1] 
-    #     }
+    # kernel_params = {
+    #     "linear": {"C": [0.1, 1]},
+    #     "poly": {"C": [0.1], "degree": [2]},
+    #     "rbf": {"C": [0.1], "gamma": ["scale"]}
     # }
+
+    kernel_params = {
+        "linear": {"C": [0.01, 0.1, 1, 10, 100]},  
+        "poly": {
+            "C": [0.01, 0.1, 1, 10], 
+            "degree": [2, 3, 4], 
+            "gamma": ["scale", "auto"]  
+        },
+        "rbf": {
+            "C": [0.01, 0.1, 1, 10, 100], 
+            "gamma": ["scale", "auto", 0.01, 0.1, 1]  
+        }
+    }
+
     evaluator.evaluate_svm(kernel_params=kernel_params)
 
     # Test metriklerini kaydetme

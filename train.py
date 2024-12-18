@@ -268,11 +268,11 @@ if __name__ == "__main__":
     trainer.prepare_data()
 
     # ANN Eğitim Ayarları
-    learning_rates = [0.01]
-        # learning_rates = [0.0001,0.001,0.01, 0.1]
+    # learning_rates = [0.01]
+    learning_rates = [0.0001,0.001,0.01, 0.1]
 
-    epochs_list = [50]
-        # epochs_list = [50, 250, 500,1000]
+    # epochs_list = [50]
+    epochs_list = [50, 250, 500,1000]
 
     optimizers = {"SGD": 1, "BGD": len(trainer.X_train), "MBGD": 32}
     layer_configurations = [1, 2, 3]
@@ -285,24 +285,24 @@ if __name__ == "__main__":
     )
 
     # SVM Eğitim Ayarları
-    kernel_params = {
-        "linear": {"C": [0.1, 1]},
-        "poly": {"C": [0.1], "degree": [2]},
-        "rbf": {"C": [0.1], "gamma": ["scale"]}
-    }
-
-    #     kernel_params = {
-    #     "linear": {"C": [0.01, 0.1, 1, 10, 100]},  
-    #     "poly": {
-    #         "C": [0.01, 0.1, 1, 10], 
-    #         "degree": [2, 3, 4], 
-    #         "gamma": ["scale", "auto"]  
-    #     },
-    #     "rbf": {
-    #         "C": [0.01, 0.1, 1, 10, 100], 
-    #         "gamma": ["scale", "auto", 0.01, 0.1, 1]  
-    #     }
+    # kernel_params = {
+    #     "linear": {"C": [0.1, 1]},
+    #     "poly": {"C": [0.1], "degree": [2]},
+    #     "rbf": {"C": [0.1], "gamma": ["scale"]}
     # }
+
+    kernel_params = {
+        "linear": {"C": [0.01, 0.1, 1, 10, 100]},  
+        "poly": {
+            "C": [0.01, 0.1, 1, 10], 
+            "degree": [2, 3, 4], 
+            "gamma": ["scale", "auto"]  
+        },
+        "rbf": {
+            "C": [0.01, 0.1, 1, 10, 100], 
+            "gamma": ["scale", "auto", 0.01, 0.1, 1]  
+        }
+    }
 
     trainer.train_svm(kernel_params=kernel_params)
     trainer.save_combined_metrics()
