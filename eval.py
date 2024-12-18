@@ -42,6 +42,7 @@ class Evaluator:
         """
         print("Preparing test dataset...")
         dataset_processor = DatasetProcessor()
+        dataset_processor.load_dataset()
         test_splits = dataset_processor.split_dataset()
         self.X_test, self.y_test = test_splits["test"]
         print("Test data prepared.")
@@ -81,10 +82,14 @@ class Evaluator:
 
                         # Confusion Matrix çizdirme
                         self.visualizer.plot_confusion_matrix(
-                            self.y_test, y_pred, 
-                            save_path=os.path.join(self.confusion_dir, model_name.replace('.keras', '_confusion.png')),
-                            title=f"Confusion Matrix - {model_name}"
+                            y_true=self.y_test,
+                            y_pred=y_pred,
+                            set_type="test",
+                            model_name="ANN",
+                            params={"LR": lr, "Epochs": epochs, "Layers": layers, "Optimizer": optimizer_name},
+                            save_dir=self.confusion_dir
                         )
+
 
                         # Decision Boundary çizdirme
                         self.visualizer.plot_decision_boundary(
@@ -134,11 +139,14 @@ class Evaluator:
 
                         # Confusion Matrix çizdirme
                         self.visualizer.plot_confusion_matrix(
-                            self.y_test, y_pred, 
-                            save_path=os.path.join(self.confusion_dir, model_name.replace('.pkl', '_confusion.png')),
-                            title=f"Confusion Matrix - {model_name}"
+                            y_true=self.y_test,
+                            y_pred=y_pred,
+                            set_type="test",
+                            model_name="SVM",
+                            params={"Kernel": kernel, "C": C, "Degree": degree, "Gamma": gamma},
+                            save_dir=self.confusion_dir
                         )
-
+                        
                         # Decision Boundary çizdirme
                         self.visualizer.plot_decision_boundary(
                             model=svm_model,
