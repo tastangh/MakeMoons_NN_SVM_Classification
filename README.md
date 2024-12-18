@@ -36,10 +36,10 @@ pip install -r requirements.txt3- Eğitime sokulan bir modeli metriklere  göre 
 python eval.py
 
 ## Çalıştırma
-1. Model eğitimi ve eğitim çıktılarını oluşturma
+1- Model eğitimi ve eğitim çıktılarını oluşturma
 python train.py
 
-3. Eğitime sokulan bir modeli değerlendirme ve çıktılarını oluşturma
+2- Eğitime sokulan bir modeli değerlendirme ve çıktılarını oluşturma
 python eval.py
 
 ### Dosya Düzeni
