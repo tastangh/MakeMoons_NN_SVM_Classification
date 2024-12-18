@@ -37,11 +37,13 @@ pip install -r requirements.txt
 ```
 ## Çalıştırma
 1- Model eğitimi ve eğitim çıktılarını oluşturma
-
+```
 python train.py
-
+```
 2- Eğitime sokulan bir modeli değerlendirme ve çıktılarını oluşturma
+```
 python eval.py
+```
 
 ### Dosya Düzeni
 /MakeMoons_NN_SVM_Classification
