@@ -12,11 +12,14 @@ import seaborn as sns
 
 class Evaluator:
     """
-    Test verisi kullanarak kaydedilen ANN ve SVM modellerini değerlendirir,
-    metrik hesaplamalarını yapar ve görselleştirme sağlar.
+    Test verisi kullanarak kayıtlı ANN ve SVM modellerini değerlendiren, 
+    metrik hesaplamalarını gerçekleştiren ve görselleştirme yapan sınıf.
     """
-
     def __init__(self):
+        """
+        Evaluator sınıfını başlatır. 
+        Gerekli dizinleri hazırlar ve Visualizer nesnesini oluşturur.
+        """
         self._initialize_directories()
         self.metrics_list = []
         self.visualizer = Visualizer(save_dir=self.plots_dir)
@@ -24,7 +27,7 @@ class Evaluator:
 
     def _initialize_directories(self):
         """
-        Test metrikleri ve görselleri kaydedecek dizinleri oluşturur.
+        Test metrikleri ve görselleri kaydetmek için gerekli dizinleri oluşturur.
         """
         self.save_dir = "evaluation_results"
         self.plots_dir = os.path.join(self.save_dir, "plots")
@@ -39,6 +42,9 @@ class Evaluator:
     def prepare_test_data(self):
         """
         Test verisini hazırlar.
+
+        DatasetProcessor sınıfını kullanarak veri setini yükler ve 
+        Test verilerini `self.X_test` ve `self.y_test` olarak alır.
         """
         print("Preparing test dataset...")
         dataset_processor = DatasetProcessor()
@@ -50,6 +56,12 @@ class Evaluator:
     def evaluate_ann(self, learning_rates, epochs_list, optimizers, layer_configurations):
         """
         Kayıtlı ANN modellerini değerlendirir.
+
+        Args:
+            learning_rates (list): Öğrenme oranlarının bir listesi.
+            epochs_list (list): Epoch sayılarının bir listesi.
+            optimizers (dict): Optimizasyon algoritmalarını temsil eden bir sözlük.
+            layer_configurations (list): Gizli katman sayılarının bir listesi.
         """
         print("\nEvaluating ANN models...")
         model_dir = "train_results/models"
@@ -107,6 +119,9 @@ class Evaluator:
     def evaluate_svm(self, kernel_params):
         """
         Kayıtlı SVM modellerini değerlendirir.
+
+        Args:
+            kernel_params (dict): Kernel türlerini ve hiperparametrelerini temsil eden bir sözlük.
         """
         print("\nEvaluating SVM models...")
         model_dir = "train_results/models"
@@ -165,7 +180,7 @@ class Evaluator:
 
     def save_test_metrics(self):
         """
-        Test metriklerini dosyaya kaydeder.
+        Test değerlendirmesinden elde edilen metrikleri bir metin dosyasına yazar.
         """
         print("\nSaving test metrics...")
         with open(self.metrics_path, "w") as file:
