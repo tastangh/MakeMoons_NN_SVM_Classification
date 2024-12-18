@@ -1,3 +1,4 @@
 /mlhw2_env
 /__pycache__
 /models
+/train_results/models
