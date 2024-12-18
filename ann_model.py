@@ -4,7 +4,7 @@ from tensorflow.keras.optimizers import SGD
 
 class ANNModel:
     """
-    Yapay Sinir Ağları (ANN) modelini oluşturmak ve yönetmek için bir sınıf.
+    Yapay Sinir Ağları (ANN) modelini oluşturma ve yönetme sınıfı.
 
     Bu sınıf, belirli sayıda giriş özelliği, gizli katman ve öğrenme oranı ile
     bir Yapay Sinir Ağı (ANN) modeli oluşturmak için kullanılır.

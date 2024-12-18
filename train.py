@@ -16,6 +16,11 @@ class Trainer:
     Veri hazırlama, model eğitimi, metrik hesaplama ve görselleştirme işlemlerini yöneten Trainer sınıfı.
     """
     def __init__(self):
+        """
+        Trainer sınıfını başlatır ve gerekli dizinleri oluşturur.
+
+        Ayrıca bir Logger nesnesi oluşturur ve eğitimin başlaması için gerekli ayarları yapar.
+        """
         self._initialize_directories()
         self.logger = Logger(save_dir=self.save_dir,log_filename="train.log").logger     
         self.metrics_list = []  
@@ -46,6 +51,9 @@ class Trainer:
     def prepare_data(self):
         """
         Veriyi oluşturur, bölüştürür ve görselleştirir.
+
+        DatasetProcessor sınıfını kullanarak veri setini oluşturur ve eğitim/doğrulama setlerine böler.
+        Ayrıca veri setinin genel ve ayrılmış haliyle ilgili görselleştirmeler yapar.
         """
         self.logger.info("Creating and splitting the dataset...")
         dataset_processor = DatasetProcessor()
@@ -64,13 +72,13 @@ class Trainer:
 
     def train_ann(self, learning_rates, epochs_list, optimizers, layer_configurations):
         """
-        Yapay Sinir Ağları (ANN) için hiperparametre taraması ve eğitim.
+        Yapay Sinir Ağları (ANN) için eğitim ve hiperparametre taraması yapar.
 
-        Parametreler:
-        learning_rates -- Öğrenme oranları listesi
-        epochs_list -- Epoch sayıları listesi
-        optimizers -- Optimizasyon yöntemleri (örneğin, SGD, MBGD)
-        layer_configurations -- Gizli katman sayıları listesi
+        Args:
+            learning_rates (list): Öğrenme oranları.
+            epochs_list (list): Eğitim sırasında kullanılacak epoch sayıları.
+            optimizers (dict): Optimizasyon algoritmaları ve batch size değerlerini içeren sözlük.
+            layer_configurations (list): Gizli katman sayılarının listesi.
         """
 
         for lr in learning_rates:
@@ -162,10 +170,10 @@ class Trainer:
 
     def train_svm(self, kernel_params):
         """
-        SVM modellerini eğitim için hiperparametre taraması yapar.
+        Destek Vektör Makineleri (SVM) için eğitim yapar.
 
-        Parametreler:
-        kernel_params -- Çekirdek türleri ve parametrelerinin sözlüğü
+        Args:
+            kernel_params (dict): Kernel türleri ve parametrelerini içeren sözlük.
         """
 
         for kernel, params in kernel_params.items():

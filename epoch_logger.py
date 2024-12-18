@@ -2,7 +2,7 @@ from tensorflow.keras.callbacks import Callback
 
 class EpochLogger(Callback):
     """
-    Sadece ilk ve son epoch'taki doğruluk (accuracy) ve kayıp (loss) değerlerini loglamak için bir Callback sınıfı.
+    Sadece ilk ve son epoch'taki doğruluk (accuracy) ve kayıp (loss) değerlerini loglamak için bir Callback sınıfıdır.
     """
     def __init__(self, logger):
         """

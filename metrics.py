@@ -2,7 +2,7 @@ from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, r
 
 class MetricsEvaluator:
     """
-    Sınıflandırma modelinin performans metriklerini hesaplamak için bir sınıf.
+    Sınıflandırma modelinin performans metriklerini hesaplama sınıfı.
 
     Bu sınıf, confusion matrix, doğruluk (accuracy), kesinlik (precision), geri çağırma (recall) 
     ve F1-skora dair metrikleri hesaplar. Ayrıca, hata durumunda güvenli bir şekilde çalışabilmesi 

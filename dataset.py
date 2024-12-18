@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 
 class DatasetProcessor:
     """
-    Veri setini oluşturma, bölme, kaydetme ve yükleme işlemleri için sınıfı.
+    Veri setini oluşturma, bölme, kaydetme ve yükleme işlemleri sınıfı.
     
     Bu sınıf, yapay bir veri seti oluşturmak, bu veri setini kaydetmek ve 
     eğitim/doğrulama/test setlerine bölmek için kullanılır.
