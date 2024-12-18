@@ -48,7 +48,7 @@ class DatasetProcessor:
         # Veri setini belirtilen klasöre kaydeder
         save_path = os.path.join(self.save_dir, "dataset.csv")
         self.dataset.to_csv(save_path, index=False)
-        print(f"Veri seti {save_path} konumuna kaydedildi.")
+        print(f"Dataset saved to {save_path}")
         return self.dataset
 
     def load_dataset(self):
@@ -66,10 +66,10 @@ class DatasetProcessor:
         """
         load_path = os.path.join(self.save_dir, "dataset.csv")
         if not os.path.exists(load_path):
-            raise FileNotFoundError(f"Veri seti dosyası {load_path} konumunda bulunamadı. Lütfen önce veri setini oluşturun.")
+            raise FileNotFoundError(f"Dataset file not found at {load_path}. Please create the dataset first.")
                 
         self.dataset = pd.read_csv(load_path)
-        print(f"Veri seti {load_path} konumundan yüklendi.")
+        print(f"Dataset loaded from {load_path}")
         return self.dataset
 
     def split_dataset(self):
@@ -90,7 +90,7 @@ class DatasetProcessor:
             ValueError: Eğer veri seti oluşturulmadı ya da yüklenmediyse.
         """
         if self.dataset is None:
-            raise ValueError("Veri seti oluşturulmadı veya yüklenmedi. Önce create_dataset() veya load_dataset() metodunu çağırın.")        
+            raise ValueError("Dataset is not created or loaded. Call create_dataset() or load_dataset() first.")
         
         X = self.dataset[['Feature1', 'Feature2']].values
         y = self.dataset['Target'].values
