@@ -32,21 +32,18 @@ Bu projede kullanılan Python paketleri:
 - seaborn
 
 Gerekli paketleri aşağıdaki komutla yükleyebilirsiniz:
-```
-pip install -r requirements.txt
-```
-## Çalıştırma
-1- Model eğitimi ve eğitim çıktılarını oluşturma
-```
-python train.py
-```
-2- Eğitime sokulan bir modeli değerlendirme ve çıktılarını oluşturma
-```
+pip install -r requirements.txt3- Eğitime sokulan bir modeli metriklere  göre değerlendirme
 python eval.py
-```
+
+## Çalıştırma
+1. Model eğitimi ve eğitim çıktılarını oluşturma
+python train.py
+
+2. Eğitime sokulan bir modeli değerlendirme ve çıktılarını oluşturma
+python eval.py
 
 ### Dosya Düzeni
-/MakeMoons_NN_SVM_Classification
+MakeMoons_NN_SVM_Classification/
     ├── ann_model.py              # ANN modeli
     ├── dataset.py                # Veri kümesinin oluşturulması ve bölünmesi
     ├── eval.py                   # Modellerin test edilmesi ve değerlendirilmesi
@@ -58,13 +55,13 @@ python eval.py
     ├── visualize.py              # Görselleştirme (sınıf dağılımı, karar sınırları vb.)
     ├── requirements.txt          # Gerekli kütüphaneler
     ├── README.md                 # Proje açıklaması
-    ├── dataset/                  # Veri kümesi (ham veriler veya örnek veri dosyaları)
+    ├── dataset/                  # Veri kümesi ve görselleştirilmeleri
     ├── train_results/            # Eğitim çıktıları ve görseller
-    │   ├── models                # Eğitilen modeller
-    │   ├── plots                 # Eğitim görselleri (kayıp grafikleri, confusion matrix'leri ve karar sınırı görselleri)
-    │   ├── combined_metrics.txt  # Eğitim metrikleri (model ve hiperparametre bazlı train ve val sonuçları tablosu)
-    │   ├── train.log             # Eğitim logları
+        ├── models                # Eğitilen modeller
+        ├── plots                 # Eğitim Görselleri (Kayıp Grafikleri,Confusion matrixleri ve KararSınırı Görselleri)
+        |── combined_metrics.txt  # Eğitim Metrikleri (Model ve hiperparemetre bazlı train ve val sonuçları tablosu)
+        |── train.log             # Eğitim Logları
     ├── evaluation_results/       # Değerlendirme çıktıları
-    │   ├── plots                 # Değerlendirme görselleri (confusion matrix'leri ve karar sınırı görselleri)
-    │   ├── combined_metrics.txt  # Değerlendirme metrikleri (model ve hiperparametre bazlı test sonuçları tablosu)
+        ├── plots                 # Değerlendirme Görselleri (Confusion matrixleri ve Karar Sınırı Görselleri)
+        |── combined_metrics.txt  # Değerlendirme Metrikleri (Model ve hiperparemetre bazlı test sonuçları tablosu)
 
