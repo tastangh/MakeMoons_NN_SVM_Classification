@@ -7,45 +7,15 @@ from ann_model import ANNModel
 from svm_model import SVMModel
 from metrics import MetricsEvaluator
 from visualize import Visualizer
-from tensorflow.keras.callbacks import Callback
+from logger import Logger 
 
-class LogEpoch(Callback):
-    """
-    Sadece ilk ve son epoch'taki train/val metriklerini loglamak için callback.
-    """
-    def on_epoch_end(self, epoch, logs=None):
-        if epoch == 0 or epoch == self.params['epochs'] - 1:
-            print(f"Epoch {epoch+1}/{self.params['epochs']} - "
-                  f"loss: {logs['loss']:.4f}, accuracy: {logs['accuracy']:.4f}, "
-                  f"val_loss: {logs['val_loss']:.4f}, val_accuracy: {logs['val_accuracy']:.4f}")
-
-class Tee:
-    """
-    Logları hem konsola hem dosyaya yönlendiren sınıf.
-    """
-    def __init__(self, *files):
-        self.files = files
-
-    def write(self, obj):
-        for f in self.files:
-            if not f.closed:
-                f.write(obj)
-                f.flush()
-
-    def flush(self):
-        for f in self.files:
-            try:
-                if not f.closed:
-                    f.flush()
-            except ValueError:
-                pass
 class Trainer:
     """
     Veri hazırlama, model eğitimi, metrik hesaplama ve görselleştirme işlemlerini yöneten Trainer sınıfı.
     """
     def __init__(self):
         self._initialize_directories()
-        self._initialize_logger()
+        self.logger = Logger(save_dir=self.save_dir).logger     
         self.metrics_list = []  
         print("Trainer initialized.")
 
@@ -68,14 +38,6 @@ class Trainer:
         os.makedirs(self.decision_plots_dir, exist_ok=True)
         os.makedirs(self.confusion_matrix_dir, exist_ok=True)
         
-
-    def _initialize_logger(self):
-        """
-        Loglama işlemlerini başlatır.
-        """
-        log_file_path = os.path.join(self.save_dir, "training_log.txt")
-        self.log_file = open(log_file_path, "w")  # Log dosyasını self.log_file olarak tanımla
-        sys.stdout = Tee(sys.stdout, self.log_file)
 
     def prepare_data(self):
         """
@@ -298,15 +260,6 @@ class Trainer:
 
         print(f"Combined metrics saved to {self.metrics_path}.")
 
-    def finalize(self):
-        """
-        Log dosyasını düzgün şekilde kapatır.
-        """
-        sys.stdout = sys.__stdout__
-        if hasattr(self, "log_file") and self.log_file: 
-            self.log_file.close()
-        print("Log file closed. Training complete.")
-
             
 if __name__ == "__main__":
     trainer = Trainer()
@@ -338,4 +291,3 @@ if __name__ == "__main__":
 
     trainer.train_svm(kernel_params=kernel_params)
     trainer.save_combined_metrics()
-    trainer.finalize()
