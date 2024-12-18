@@ -8,13 +8,13 @@ class DatasetProcessor:
     Veri setini oluşturma, bölme, kaydetme ve yükleme işlemleri için sınıf.
     """
 
-    def __init__(self, n_samples=400, noise=0.2, random_state=42, save_dir="dataset"):
+    def __init__(self, n_samples=400, noise=None, random_state=42, save_dir="dataset"):
         """
         DatasetProcessor sınıfını başlatır.
 
         Args:
-        - n_samples (int): Oluşturulacak örnek sayısı (default: 400).
-        - noise (float): Veriye eklenecek gürültü seviyesi (default: 0.2).
+        - n_samples (int): Oluşturulacak örnek sayısı (Ödevde belirtilen: 400). 
+        - noise (float): Veriye eklenecek gürültü seviyesi (Ödevde belirtilmemiş: None).
         - random_state (int): Rastgelelik kontrolü için seed (default: 42).
         - save_dir (str): Veri setinin kaydedileceği klasör (default: 'dataset').
         """
