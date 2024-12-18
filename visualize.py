@@ -2,7 +2,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import confusion_matrix
 
 class Visualizer:
     """
@@ -145,23 +145,37 @@ class Visualizer:
         plt.savefig(save_path)
         plt.close()
 
-    def plot_confusion_matrix(y_true, y_pred, save_path, title):
-        """
-        Confusion Matrix'i çizer ve kaydeder.
+    def plot_confusion_matrix(self, y_true, y_pred, set_type, model_name, params, save_dir):
+            """
+            Confusion matrix'i çizip kaydeder.
 
-        Parametreler:
-        y_true -- Gerçek etiketler
-        y_pred -- Tahmin edilen etiketler
-        save_path -- Kaydedilecek dosya yolu
-        title -- Grafiğin başlığı
-        """
-        cm = confusion_matrix(y_true, y_pred)
-        disp = ConfusionMatrixDisplay(confusion_matrix=cm)
-        fig, ax = plt.subplots(figsize=(6, 6))
-        disp.plot(cmap='Blues', ax=ax, colorbar=False)
-        plt.title(title)
-        plt.savefig(save_path)
-        plt.close()
+            Args:
+                y_true: Gerçek etiketler.
+                y_pred: Model tahminleri.
+                set_type: 'train' veya 'validation' gibi veri kümesi tipi.
+                model_name: Model adı ('ANN', 'SVM').
+                params: Model parametrelerini içeren sözlük.
+                save_dir: Kaydedilecek dizin yolu.
+            """
+            cm = confusion_matrix(y_true, y_pred)
+            plt.figure(figsize=(6, 5))
+            sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", cbar=False)
+
+            # Başlık
+            title = f"{model_name} Confusion Matrix ({set_type})\n" + ", ".join([f"{k}={v}" for k, v in params.items()])
+            plt.title(title)
+            plt.ylabel('Actual')
+            plt.xlabel('Predicted')
+
+            # Detaylı dosya ismi
+            param_str = "_".join([f"{k}{v}" for k, v in params.items()])
+            file_name = f"{model_name}_CM_{set_type}_{param_str}.png"
+            file_path = os.path.join(save_dir, file_name)
+
+            plt.tight_layout()
+            plt.savefig(file_path)
+            plt.close()
+            print(f"Confusion matrix saved: {file_path}")
 
     def plot_model_comparison(self, ann_metrics, svm_metrics, save_path):
         """

@@ -58,12 +58,16 @@ class Trainer:
         self.plots_dir = os.path.join(self.save_dir, "plots")
         self.loss_plots_dir = os.path.join(self.plots_dir, "loss")
         self.decision_plots_dir = os.path.join(self.plots_dir, "val_decision_boundaries")
+        self.confusion_matrix_dir = os.path.join(self.plots_dir, "train_val_confusion_matrix")
         self.metrics_path = os.path.join(self.save_dir, "combined_metrics.txt") 
 
+        # Dizinleri oluştur
         os.makedirs(self.save_dir, exist_ok=True)
         os.makedirs(self.model_dir, exist_ok=True)
         os.makedirs(self.loss_plots_dir, exist_ok=True)
         os.makedirs(self.decision_plots_dir, exist_ok=True)
+        os.makedirs(self.confusion_matrix_dir, exist_ok=True)
+        
 
     def _initialize_logger(self):
         """
@@ -131,6 +135,25 @@ class Trainer:
                         val_evaluator = MetricsEvaluator(self.y_val, y_pred_val)
                         val_metrics = val_evaluator.get_metrics()
 
+                        # Eğitim ve Validation için Confusion Matrix çiz
+                        self.visualizer.plot_confusion_matrix(
+                            y_true=self.y_train,
+                            y_pred=y_pred_train,
+                            set_type="train",
+                            model_name="ANN",
+                            params={"LR": lr, "Epochs": epochs, "Layers": hidden_layers, "Optimizer": optimizer_name},
+                            save_dir=self.confusion_matrix_dir
+                        )
+
+                        self.visualizer.plot_confusion_matrix(
+                            y_true=self.y_val,
+                            y_pred=y_pred_val,
+                            set_type="validation",
+                            model_name="ANN",
+                            params={"LR": lr, "Epochs": epochs, "Layers": hidden_layers, "Optimizer": optimizer_name},
+                            save_dir=self.confusion_matrix_dir
+                        )
+
                         # Metrikleri listeye ekle
                         self.metrics_list.append([
                             "ANN", lr, epochs, hidden_layers, optimizer_name,
@@ -163,6 +186,7 @@ class Trainer:
                             optimizer_name=optimizer_name,
                             hidden_layers=hidden_layers
                         )
+                        
 
                         # Modeli kaydet
                         model_path = os.path.join(self.model_dir, f"ann_model_LR{lr}_Epoch{epochs}_Opt{optimizer_name}_Layers{hidden_layers}.keras")
@@ -199,13 +223,32 @@ class Trainer:
                         val_evaluator = MetricsEvaluator(self.y_val, y_pred_val)
                         val_metrics = val_evaluator.get_metrics()
 
+                        # Eğitim ve Validation için Confusion Matrix çiz
+                        self.visualizer.plot_confusion_matrix(
+                            y_true=self.y_train,
+                            y_pred=y_pred_train,
+                            set_type="train",
+                            model_name="SVM",
+                            params={"Kernel": kernel, "C": C, "Degree": degree, "Gamma": gamma},
+                            save_dir=self.confusion_matrix_dir
+                        )
+
+                        self.visualizer.plot_confusion_matrix(
+                            y_true=self.y_val,
+                            y_pred=y_pred_val,
+                            set_type="validation",
+                            model_name="SVM",
+                            params={"Kernel": kernel, "C": C, "Degree": degree, "Gamma": gamma},
+                            save_dir=self.confusion_matrix_dir
+                        )
+
+
                         # Metrikleri listeye ekle
                         self.metrics_list.append([
                             "SVM", kernel, C, degree, gamma,
                             train_metrics, val_metrics
-])
+                        ])
 
-                        # Karar sınırlarını kaydet
                         decision_boundary_path = os.path.join(
                             self.decision_plots_dir,
                             f"svm_decision_boundary_{kernel}_C{C}_Degree{degree}_Gamma{gamma}.png"
@@ -216,9 +259,10 @@ class Trainer:
                             y=self.y_val,
                             save_path=decision_boundary_path,
                             model_type="SVM",
-                            kernel,
-                            degree
-
+                            kernel=kernel,
+                            C=C,
+                            degree=degree,
+                            gamma=gamma
                         )
 
                         # Modeli kaydet
@@ -239,8 +283,8 @@ class Trainer:
             header = "{:<8} {:<12} {:<8} {:<8} {:<14} {:<10} {:<10} {:<10} {:<10} {:<10} {:<10} {:<10} {:<10}\n"
             file.write(header.format(
                 "Model", "Param1", "Param2", "Param3", "Param4",
-                "Train_Acc", "Train_Prec", "Train_Recall", "Train_F1",
-                "Val_Acc", "Val_Prec", "Val_Recall", "Val_F1"
+                "T_Acc", "T_Prec", "T_Recall", "T_F1",
+                "V_Acc", "V_Prec", "V_Recall", "V_F1"
             ))
 
             for entry in self.metrics_list:
@@ -269,10 +313,10 @@ if __name__ == "__main__":
     trainer.prepare_data()
 
     # ANN Eğitim Ayarları
-    learning_rates = [0.1]
+    learning_rates = [0.01,0.1]
         # learning_rates = [0.0001,0.001,0.01, 0.1]
 
-    epochs_list = [50]
+    epochs_list = [20,50]
         # epochs_list = [50, 250, 500,1000]
 
     optimizers = {"SGD": 1, "BGD": len(trainer.X_train), "MBGD": 32}
