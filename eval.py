@@ -191,8 +191,11 @@ if __name__ == "__main__":
     evaluator.prepare_test_data()
 
     # ANN Değerlendirme Ayarları
-    learning_rates = [0.01, 0.1]
-    epochs_list = [20, 50]
+    learning_rates = [0.01]
+        # learning_rates = [0.0001,0.001,0.01, 0.1]
+
+    epochs_list = [50]
+        # epochs_list = [50, 250, 500,1000]
     optimizers = {"SGD": 1, "BGD": len(evaluator.X_test), "MBGD": 32}
     layer_configurations = [1, 2, 3]
 
@@ -209,7 +212,17 @@ if __name__ == "__main__":
         "poly": {"C": [0.1], "degree": [2]},
         "rbf": {"C": [0.1], "gamma": ["scale"]}
     }
-
+    #     kernel_params = {
+    #     "linear": {"C": [0.01, 0.1, 1, 10, 100]}, 
+    #     "poly": {
+    #         "C": [0.01, 0.1, 1, 10], 
+    #         "degree": [2, 3, 4], 
+    #         "gamma": ["scale", "auto"] 
+    #     "rbf": {
+    #         "C": [0.01, 0.1, 1, 10, 100], 
+    #         "gamma": ["scale", "auto", 0.01, 0.1, 1] 
+    #     }
+    # }
     evaluator.evaluate_svm(kernel_params=kernel_params)
 
     # Test metriklerini kaydetme

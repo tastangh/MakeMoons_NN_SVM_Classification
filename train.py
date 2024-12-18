@@ -292,15 +292,15 @@ if __name__ == "__main__":
     }
 
     #     kernel_params = {
-    #     "linear": {"C": [0.01, 0.1, 1, 10, 100]},  # C'yi geniş aralıkta tarayarak regularization'ı incele
+    #     "linear": {"C": [0.01, 0.1, 1, 10, 100]},  
     #     "poly": {
     #         "C": [0.01, 0.1, 1, 10], 
-    #         "degree": [2, 3, 4],  # Degree'yi artırarak polinomsal dönüşüm derecesini test et
-    #         "gamma": ["scale", "auto"]  # Gamma parametresini de dahil et
+    #         "degree": [2, 3, 4], 
+    #         "gamma": ["scale", "auto"]  
     #     },
     #     "rbf": {
     #         "C": [0.01, 0.1, 1, 10, 100], 
-    #         "gamma": ["scale", "auto", 0.01, 0.1, 1]  # Gamma'yı geniş aralıkta dene
+    #         "gamma": ["scale", "auto", 0.01, 0.1, 1]  
     #     }
     # }
 
