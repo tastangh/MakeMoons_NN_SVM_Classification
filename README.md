@@ -37,6 +37,7 @@ python eval.py
 
 ## Çalıştırma
 1- Model eğitimi ve eğitim çıktılarını oluşturma
+
 python train.py
 
 2- Eğitime sokulan bir modeli değerlendirme ve çıktılarını oluşturma
