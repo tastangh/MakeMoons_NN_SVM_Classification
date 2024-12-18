@@ -32,9 +32,9 @@ Bu projede kullanılan Python paketleri:
 - seaborn
 
 Gerekli paketleri aşağıdaki komutla yükleyebilirsiniz:
-pip install -r requirements.txt3- Eğitime sokulan bir modeli metriklere  göre değerlendirme
-python eval.py
-
+```
+pip install -r requirements.txt
+```
 ## Çalıştırma
 1- Model eğitimi ve eğitim çıktılarını oluşturma
 
