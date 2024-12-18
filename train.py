@@ -26,6 +26,7 @@ class Trainer:
         Model, sonuçlar ve grafiklerin kaydedileceği dizinleri oluşturur.
         """
         self.save_dir = "train_results"
+        self.dataset_dir="dataset"
         self.model_dir = os.path.join(self.save_dir, "models")
         self.plots_dir = os.path.join(self.save_dir, "plots")
         self.loss_plots_dir = os.path.join(self.plots_dir, "loss")
@@ -35,6 +36,7 @@ class Trainer:
 
         # Dizinleri oluştur
         os.makedirs(self.save_dir, exist_ok=True)
+        os.makedirs(self.dataset_dir, exist_ok=True)
         os.makedirs(self.model_dir, exist_ok=True)
         os.makedirs(self.loss_plots_dir, exist_ok=True)
         os.makedirs(self.decision_plots_dir, exist_ok=True)
@@ -54,7 +56,7 @@ class Trainer:
         self.X_val, self.y_val = splits["validation"]
 
         self.logger.info("Visualizing the dataset...")
-        self.visualizer = Visualizer(save_dir=self.plots_dir)
+        self.visualizer = Visualizer(save_dir=self.dataset_dir)
         self.visualizer.plot_all_data(dataset)
         self.visualizer.plot_splits(splits)
 

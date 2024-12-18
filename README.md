@@ -1,5 +1,5 @@
-# MakeMoons_NN_SVM_Classification
-MakeMoons_NN_SVM_Classification
+# **MakeMoons_NN_SVM_Classification**
+
 
 /MakeMoons_NN_SVM_Classification
     ├── dataset.py         # Veri kümesi oluşturma ve ayırma işlemleri.
