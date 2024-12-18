@@ -175,7 +175,6 @@ class Visualizer:
             plt.tight_layout()
             plt.savefig(file_path)
             plt.close()
-            print(f"Confusion matrix saved: {file_path}")
 
     def plot_model_comparison(self, ann_metrics, svm_metrics, save_path):
         """

@@ -8,6 +8,8 @@ from svm_model import SVMModel
 from metrics import MetricsEvaluator
 from visualize import Visualizer
 from logger import Logger 
+from epoch_logger import EpochLogger  
+from logger import Logger 
 
 class Trainer:
     """
@@ -15,9 +17,9 @@ class Trainer:
     """
     def __init__(self):
         self._initialize_directories()
-        self.logger = Logger(save_dir=self.save_dir).logger     
+        self.logger = Logger(save_dir=self.save_dir,log_filename="train.log").logger     
         self.metrics_list = []  
-        print("Trainer initialized.")
+        self.logger.info("Trainer initialized.")
 
     def _initialize_directories(self):
         """
@@ -43,7 +45,7 @@ class Trainer:
         """
         Veriyi oluşturur, bölüştürür ve görselleştirir.
         """
-        print("Creating and splitting the dataset...")
+        self.logger.info("Creating and splitting the dataset...")
         dataset_processor = DatasetProcessor()
         dataset = dataset_processor.create_dataset()
         splits = dataset_processor.split_dataset()
@@ -51,12 +53,12 @@ class Trainer:
         self.X_train, self.y_train = splits["train"]
         self.X_val, self.y_val = splits["validation"]
 
-        print("Visualizing the dataset...")
+        self.logger.info("Visualizing the dataset...")
         self.visualizer = Visualizer(save_dir=self.plots_dir)
         self.visualizer.plot_all_data(dataset)
         self.visualizer.plot_splits(splits)
 
-        print("Data preparation complete.")
+        self.logger.info("Data preparation complete.")
 
     def train_ann(self, learning_rates, epochs_list, optimizers, layer_configurations):
         """
@@ -73,7 +75,7 @@ class Trainer:
             for epochs in epochs_list:
                 for optimizer_name, batch_size in optimizers.items():
                     for hidden_layers in layer_configurations:
-                        print(f"Training ANN: LR={lr}, Epochs={epochs}, Optimizer={optimizer_name}, Layers={hidden_layers}...")
+                        self.logger.info(f"Training ANN: LR={lr}, Epochs={epochs}, Optimizer={optimizer_name}, Layers={hidden_layers}...")
                         
                         # ANN Modelini oluştur ve eğit
                         ann_builder = ANNModel(input_dim=self.X_train.shape[1], hidden_layers=hidden_layers, learning_rate=lr)
@@ -83,8 +85,8 @@ class Trainer:
                             validation_data=(self.X_val, self.y_val),
                             epochs=epochs,
                             batch_size=batch_size,
-                            verbose=0,
-                            callbacks=[LogEpoch()]  # İlk ve son epoch loglama
+                            verbose=0, 
+                            callbacks=[EpochLogger(self.logger)]  
                         )
 
                         # Eğitim seti için tahmin ve metrikler
@@ -154,7 +156,7 @@ class Trainer:
                         model_path = os.path.join(self.model_dir, f"ann_model_LR{lr}_Epoch{epochs}_Opt{optimizer_name}_Layers{hidden_layers}.keras")
                         ann_model.save(model_path)
 
-        print("ANN training complete.")
+        self.logger.info("ANN training complete.")
 
     def train_svm(self, kernel_params):
         """
@@ -168,7 +170,7 @@ class Trainer:
             for C in params.get("C", [1]):
                 for degree in params.get("degree", [3]):
                     for gamma in params.get("gamma", ["scale"]):
-                        print(f"Training SVM: Kernel={kernel}, C={C}, Degree={degree}, Gamma={gamma}...")
+                        self.logger.info(f"Training SVM: Kernel={kernel}, C={C}, Degree={degree}, Gamma={gamma}...")
                         
                         # SVM Modelini oluştur ve eğit
                         svm_builder = SVMModel(kernel=kernel, C=C, degree=degree, gamma=gamma)
@@ -234,13 +236,13 @@ class Trainer:
                         )
                         joblib.dump(svm_model, model_path)
 
-        print("SVM training complete.")
+        self.logger.info("SVM training complete.")
 
     def save_combined_metrics(self):
         """
         Tüm eğitim ve doğrulama metriklerini birleştirir ve dosyaya kaydeder.
         """
-        print("\nSaving combined metrics...")
+        self.logger.info("\nSaving combined metrics...")
         with open(self.metrics_path, "w") as file:
             header = "{:<8} {:<12} {:<8} {:<8} {:<14} {:<10} {:<10} {:<10} {:<10} {:<10} {:<10} {:<10} {:<10}\n"
             file.write(header.format(
@@ -258,7 +260,7 @@ class Trainer:
                     val_metrics['accuracy'], val_metrics['precision'], val_metrics['recall'], val_metrics['f1_score']
                 ))
 
-        print(f"Combined metrics saved to {self.metrics_path}.")
+        self.logger.info(f"Combined metrics saved to {self.metrics_path}.")
 
             
 if __name__ == "__main__":
@@ -266,10 +268,10 @@ if __name__ == "__main__":
     trainer.prepare_data()
 
     # ANN Eğitim Ayarları
-    learning_rates = [0.01,0.1]
+    learning_rates = [0.01]
         # learning_rates = [0.0001,0.001,0.01, 0.1]
 
-    epochs_list = [20,50]
+    epochs_list = [50]
         # epochs_list = [50, 250, 500,1000]
 
     optimizers = {"SGD": 1, "BGD": len(trainer.X_train), "MBGD": 32}
@@ -288,6 +290,19 @@ if __name__ == "__main__":
         "poly": {"C": [0.1], "degree": [2]},
         "rbf": {"C": [0.1], "gamma": ["scale"]}
     }
+
+    #     kernel_params = {
+    #     "linear": {"C": [0.01, 0.1, 1, 10, 100]},  # C'yi geniş aralıkta tarayarak regularization'ı incele
+    #     "poly": {
+    #         "C": [0.01, 0.1, 1, 10], 
+    #         "degree": [2, 3, 4],  # Degree'yi artırarak polinomsal dönüşüm derecesini test et
+    #         "gamma": ["scale", "auto"]  # Gamma parametresini de dahil et
+    #     },
+    #     "rbf": {
+    #         "C": [0.01, 0.1, 1, 10, 100], 
+    #         "gamma": ["scale", "auto", 0.01, 0.1, 1]  # Gamma'yı geniş aralıkta dene
+    #     }
+    # }
 
     trainer.train_svm(kernel_params=kernel_params)
     trainer.save_combined_metrics()
