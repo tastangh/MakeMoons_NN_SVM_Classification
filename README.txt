@@ -57,11 +57,11 @@ MakeMoons_NN_SVM_Classification/
     ├── README.md                 # Proje açıklaması
     ├── dataset/                  # Veri kümesi ve görselleştirilmeleri
     ├── train_results/            # Eğitim çıktıları ve görseller
-        ├── models                # Eğitilen modeller
-        ├── plots                 # Eğitim Görselleri 
-        |── combined_metrics.txt  # Eğitim Metrikleri 
-        |── train.log             # Eğitim Logları
+    |   ├── models                # Eğitilen modeller
+    |   ├── plots                 # Eğitim Görselleri 
+    |   |── combined_metrics.txt  # Eğitim Metrikleri 
+    |   |── train.log             # Eğitim Logları
     ├── evaluation_results/       # Değerlendirme çıktıları
-        ├── plots                 # Değerlendirme Görselleri 
-        |── combined_metrics.txt  # Değerlendirme Metrikleri 
+    |   ├── plots                 # Değerlendirme Görselleri 
+    |   |── combined_metrics.txt  # Değerlendirme Metrikleri 
 
