@@ -191,11 +191,11 @@ if __name__ == "__main__":
     evaluator.prepare_test_data()
 
     # ANN Değerlendirme Ayarları
-    learning_rates = [0.01]
-        # learning_rates = [0.0001,0.001,0.01, 0.1]
+    # learning_rates = [0.01]
+    learning_rates = [0.0001,0.001,0.01, 0.1]
 
-    epochs_list = [50]
-        # epochs_list = [50, 250, 500,1000]
+    # epochs_list = [50]
+    epochs_list = [50, 250, 500,1000]
     optimizers = {"SGD": 1, "BGD": len(evaluator.X_test), "MBGD": 32}
     layer_configurations = [1, 2, 3]
 
