@@ -2,6 +2,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+from sklearn.metrics import confusion_matrix
 
 class Visualizer:
     """
@@ -88,7 +89,7 @@ class Visualizer:
         - save_dir (str): Kayıt dizini.
         """
         os.makedirs(save_dir, exist_ok=True)
-        file_name = f"loss_LR{learning_rate}_Epochs{epochs}_Opt{optimizer_name}_Layers{hidden_layers}.png"
+        file_name = f"ann_loss_LR{learning_rate}_Epochs{epochs}_Opt{optimizer_name}_Layers{hidden_layers}.png"
         title = (f"Kayıp Grafiği - LR: {learning_rate}, Epochs: {epochs}, "
                  f"Optimizer: {optimizer_name}, Layers: {hidden_layers}")
         
@@ -102,63 +103,78 @@ class Visualizer:
         plt.savefig(os.path.join(save_dir, file_name))
         plt.close()
 
-     def plot_decision_boundary(self, model, X, y, save_path, model_type="ANN", **kwargs):
+    def plot_decision_boundary(self, model, X, y, save_path, model_type="ANN", **kwargs):
         """
         Modelin karar sınırını çizer ve belirtilen dosya yoluna kaydeder.
 
         Args:
             model: Eğitimli model (ANN veya SVM).
-            X: Test veri kümesi (özellikler).
-            y: Test veri kümesi (etiketler).
+            X: Veri kümesi (özellikler).
+            y: Veri kümesi (etiketler).
             save_path: Karar sınırının kaydedileceği dosya yolu.
             model_type: Model tipi ("ANN" veya "SVM").
-            **kwargs: Ek parametreler (LR, Epoch, Kernel gibi).
+            **kwargs: Ek parametreler (LR, Epoch, Kernel, Degree, Gamma gibi).
         """
         x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
         y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
-        xx, yy = np.meshgrid(np.linspace(x_min, x_max, 100), np.linspace(y_min, y_max, 100))
+        xx, yy = np.meshgrid(np.linspace(x_min, x_max, 200), np.linspace(y_min, y_max, 200))
         grid = np.c_[xx.ravel(), yy.ravel()]
 
+        # Model tahminleri
         if model_type == "ANN":
-            Z = (model.predict(grid) > 0.5).astype(int)
+            Z = (model.predict(grid).ravel() > 0.5).astype(int)
         elif model_type == "SVM":
             Z = model.predict(grid)
         else:
             raise ValueError("Geçersiz model tipi: 'ANN' veya 'SVM' olmalı.")
 
         Z = Z.reshape(xx.shape)
-        
-        # Karar sınırı çizimi
+
+        # Grafik çizimi
         plt.figure(figsize=(8, 6))
-        plt.contourf(xx, yy, Z, alpha=0.3)
-        plt.scatter(X[:, 0], X[:, 1], c=y, edgecolors='k', marker='o')
-        
-        # Grafik başlığını detaylandırma
-        title_details = ", ".join([f"{key}={value}" for key, value in kwargs.items()])
-        plt.title(f"Decision Boundary ({model_type}) - {title_details}")
+        plt.contourf(xx, yy, Z, alpha=0.3, cmap="coolwarm")
+        plt.scatter(X[:, 0], X[:, 1], c=y, cmap="coolwarm", edgecolors='k', marker='o')
+
+        # Başlık düzenlemesi: Model parametrelerini ekleyelim
+        title_details = "\n".join([f"{key}={value}" for key, value in kwargs.items()])
+        plt.title(f"Decision Boundary ({model_type})\n{title_details}", fontsize=10, wrap=True)
         
         plt.xlabel("Feature 1")
         plt.ylabel("Feature 2")
         plt.tight_layout()
         plt.savefig(save_path)
         plt.close()
-    def plot_confusion_matrix(self, cm, class_labels, title, save_path):
-        """
-        Confusion matrix'i görselleştirir.
 
-        Args:
-        - cm: Confusion matrix (sklearn.metrics.confusion_matrix çıktısı)
-        - class_labels: Sınıf etiketleri (örn. ["Class 0", "Class 1"])
-        - title: Grafik başlığı
-        - save_path: Kaydedilecek dosya yolu
-        """
-        plt.figure(figsize=(8, 6))
-        sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=class_labels, yticklabels=class_labels)
-        plt.xlabel("Tahmin Edilen")
-        plt.ylabel("Gerçek")
-        plt.title(title)
-        plt.savefig(save_path)
-        plt.close()
+    def plot_confusion_matrix(self, y_true, y_pred, set_type, model_name, params, save_dir):
+            """
+            Confusion matrix'i çizip kaydeder.
+
+            Args:
+                y_true: Gerçek etiketler.
+                y_pred: Model tahminleri.
+                set_type: 'train' veya 'validation' gibi veri kümesi tipi.
+                model_name: Model adı ('ANN', 'SVM').
+                params: Model parametrelerini içeren sözlük.
+                save_dir: Kaydedilecek dizin yolu.
+            """
+            cm = confusion_matrix(y_true, y_pred)
+            plt.figure(figsize=(6, 5))
+            sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", cbar=False)
+
+            # Başlık
+            title = f"{model_name} Confusion Matrix ({set_type})\n" + ", ".join([f"{k}={v}" for k, v in params.items()])
+            plt.title(title)
+            plt.ylabel('Actual')
+            plt.xlabel('Predicted')
+
+            # Detaylı dosya ismi
+            param_str = "_".join([f"{k}{v}" for k, v in params.items()])
+            file_name = f"{model_name}_CM_{set_type}_{param_str}.png"
+            file_path = os.path.join(save_dir, file_name)
+
+            plt.tight_layout()
+            plt.savefig(file_path)
+            plt.close()
 
     def plot_model_comparison(self, ann_metrics, svm_metrics, save_path):
         """

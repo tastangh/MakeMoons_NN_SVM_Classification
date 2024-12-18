@@ -4,12 +4,15 @@ from tensorflow.keras.optimizers import SGD
 
 class ANNModel:
     """
-    Yapay Sinir Ağları (ANN) modelini oluşturmak ve yönetmek için bir sınıf.
+    Yapay Sinir Ağları (ANN) modelini oluşturma ve yönetme sınıfı.
+
+    Bu sınıf, belirli sayıda giriş özelliği, gizli katman ve öğrenme oranı ile
+    bir Yapay Sinir Ağı (ANN) modeli oluşturmak için kullanılır.
     """
 
     def __init__(self, input_dim, hidden_layers=1, hidden_units=32, learning_rate=0.01):
         """
-        ANNModel sınıfını başlatır.
+        ANNModel sınıfının yapıcı fonksiyonu.
 
         Args:
         - input_dim (int): Giriş katmanındaki özellik sayısı.
@@ -21,14 +24,18 @@ class ANNModel:
         self.hidden_layers = hidden_layers
         self.hidden_units = hidden_units
         self.learning_rate = learning_rate
-        self.model = None  # Model henüz oluşturulmadı
+        self.model = None  
 
     def build_model(self):
         """
         Yapay Sinir Ağı modelini oluşturur ve derler.
 
+        Bu yöntem, verilen parametrelere göre bir Yapay Sinir Ağı (ANN) modeli oluşturur.
+        Modelin gizli katman sayısı ve nöron sayısı, sınıfın özelliklerinden alınır. 
+        Model, sigmoid aktivasyon fonksiyonu ile derlenir.
+
         Returns:
-        - model (tensorflow.keras.Model): Derlenmiş ANN modeli.
+            tensorflow.keras.Model: Derlenmiş ANN modeli.
         """
         # Modeli oluştur
         model = Sequential()
@@ -36,14 +43,14 @@ class ANNModel:
         # Giriş katmanını Input layer ile tanımla
         model.add(Input(shape=(self.input_dim,)))
 
-        # İlk gizli katman
+        # İlk gizli katmanı ekle
         model.add(Dense(self.hidden_units, activation='sigmoid'))
 
-        # Ek gizli katmanlar
+        # Ek gizli katmanlar ekle
         for _ in range(self.hidden_layers - 1):
             model.add(Dense(self.hidden_units, activation='sigmoid'))
 
-        # Çıkış katmanı
+        # Çıkış katmanı ekle
         model.add(Dense(1, activation='sigmoid'))
 
         # Optimizasyonu tanımla ve modeli derle
@@ -54,21 +61,3 @@ class ANNModel:
         self.model = model
         return model
 
-    def get_model_summary(self):
-        """
-        Modelin özetini döndürür.
-
-        Returns:
-        - (str): Modelin özet bilgisi.
-        """
-        if self.model:
-            from io import StringIO
-            import sys
-            # Model özetini bir string olarak döndür
-            stream = StringIO()
-            sys.stdout = stream
-            self.model.summary()
-            sys.stdout = sys.__stdout__
-            return stream.getvalue()
-        else:
-            return "Model henüz oluşturulmadı. 'build_model' fonksiyonunu çağırın."

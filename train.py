@@ -1,180 +1,318 @@
 import os
 import sys
 import joblib
+import numpy as np
 from dataset import DatasetProcessor
-from visualize import Visualizer
 from ann_model import ANNModel
 from svm_model import SVMModel
 from metrics import MetricsEvaluator
-import tensorflow as tf
+from visualize import Visualizer
+from logger import Logger 
+from epoch_logger import EpochLogger  
+from logger import Logger 
 
-class LogEpoch(tf.keras.callbacks.Callback):
-    """Sadece ilk ve son epoch'taki train/val metriklerini loglamak için callback."""
-    def on_epoch_end(self, epoch, logs=None):
-        if epoch == 0 or epoch == self.params['epochs'] - 1:  # İlk ve son epoch
-            print(f"Epoch {epoch+1}/{self.params['epochs']} - "
-                  f"loss: {logs['loss']:.4f}, accuracy: {logs['accuracy']:.4f}, "
-                  f"val_loss: {logs['val_loss']:.4f}, val_accuracy: {logs['val_accuracy']:.4f}")
+class Trainer:
+    """
+    Veri hazırlama, model eğitimi, metrik hesaplama ve görselleştirme işlemlerini yöneten Trainer sınıfı.
+    """
+    def __init__(self):
+        """
+        Trainer sınıfını başlatır ve gerekli dizinleri oluşturur.
 
-# Redirect stdout to a file as well as console
-log_file_path = "training_log.txt"
-class Tee:
-    def __init__(self, *files):
-        self.files = files
+        Ayrıca bir Logger nesnesi oluşturur ve eğitimin başlaması için gerekli ayarları yapar.
+        """
+        self._initialize_directories()
+        self.logger = Logger(save_dir=self.save_dir,log_filename="train.log").logger     
+        self.metrics_list = []  
+        self.logger.info("Trainer initialized.")
 
-    def write(self, obj):
-        for f in self.files:
-            if not f.closed:
-                f.write(obj)
-                f.flush()
+    def _initialize_directories(self):
+        """
+        Model, sonuçlar ve grafiklerin kaydedileceği dizinleri oluşturur.
+        """
+        self.save_dir = "train_results"
+        self.dataset_dir="dataset"
+        self.model_dir = os.path.join(self.save_dir, "models")
+        self.plots_dir = os.path.join(self.save_dir, "plots")
+        self.loss_plots_dir = os.path.join(self.plots_dir, "loss")
+        self.decision_plots_dir = os.path.join(self.plots_dir, "val_decision_boundaries")
+        self.confusion_matrix_dir = os.path.join(self.plots_dir, "train_val_confusion_matrix")
+        self.metrics_path = os.path.join(self.save_dir, "combined_metrics.txt") 
 
-    def flush(self):
-        for f in self.files:
-            try:
-                if not f.closed:
-                    f.flush()
-            except ValueError:
-                pass
+        # Dizinleri oluştur
+        os.makedirs(self.save_dir, exist_ok=True)
+        os.makedirs(self.dataset_dir, exist_ok=True)
+        os.makedirs(self.model_dir, exist_ok=True)
+        os.makedirs(self.loss_plots_dir, exist_ok=True)
+        os.makedirs(self.decision_plots_dir, exist_ok=True)
+        os.makedirs(self.confusion_matrix_dir, exist_ok=True)
+        
 
-log_file = open(log_file_path, "w")
-sys.stdout = Tee(sys.stdout, log_file)
+    def prepare_data(self):
+        """
+        Veriyi oluşturur, bölüştürür ve görselleştirir.
 
-# Constants
-SAVE_DIR = "results"
-MODEL_DIR = os.path.join(SAVE_DIR, "models")
-PLOTS_DIR = os.path.join(SAVE_DIR, "plots")
-LOSS_PLOTS_DIR = os.path.join(PLOTS_DIR, "loss")
-DECISION_PLOTS_DIR = os.path.join(PLOTS_DIR, "decision_boundaries")
-os.makedirs(SAVE_DIR, exist_ok=True)
-os.makedirs(MODEL_DIR, exist_ok=True)
-os.makedirs(LOSS_PLOTS_DIR, exist_ok=True)
-os.makedirs(DECISION_PLOTS_DIR, exist_ok=True)
+        DatasetProcessor sınıfını kullanarak veri setini oluşturur ve eğitim/doğrulama setlerine böler.
+        Ayrıca veri setinin genel ve ayrılmış haliyle ilgili görselleştirmeler yapar.
+        """
+        self.logger.info("Creating and splitting the dataset...")
+        dataset_processor = DatasetProcessor()
+        dataset = dataset_processor.create_dataset()
+        splits = dataset_processor.split_dataset()
+
+        self.X_train, self.y_train = splits["train"]
+        self.X_val, self.y_val = splits["validation"]
+
+        self.logger.info("Visualizing the dataset...")
+        self.visualizer = Visualizer(save_dir=self.dataset_dir)
+        self.visualizer.plot_all_data(dataset)
+        self.visualizer.plot_splits(splits)
+
+        self.logger.info("Data preparation complete.")
+
+    def train_ann(self, learning_rates, epochs_list, optimizers, layer_configurations):
+        """
+        Yapay Sinir Ağları (ANN) için eğitim ve hiperparametre taraması yapar.
+
+        Args:
+            learning_rates (list): Öğrenme oranları.
+            epochs_list (list): Eğitim sırasında kullanılacak epoch sayıları.
+            optimizers (dict): Optimizasyon algoritmaları ve batch size değerlerini içeren sözlük.
+            layer_configurations (list): Gizli katman sayılarının listesi.
+        """
+
+        for lr in learning_rates:
+            for epochs in epochs_list:
+                for optimizer_name, batch_size in optimizers.items():
+                    for hidden_layers in layer_configurations:
+                        self.logger.info(f"Training ANN: LR={lr}, Epochs={epochs}, Optimizer={optimizer_name}, Layers={hidden_layers}...")
+                        
+                        # ANN Modelini oluştur ve eğit
+                        ann_builder = ANNModel(input_dim=self.X_train.shape[1], hidden_layers=hidden_layers, learning_rate=lr)
+                        ann_model = ann_builder.build_model()
+                        history = ann_model.fit(
+                            self.X_train, self.y_train,
+                            validation_data=(self.X_val, self.y_val),
+                            epochs=epochs,
+                            batch_size=batch_size,
+                            verbose=0, 
+                            callbacks=[EpochLogger(self.logger)]  
+                        )
+
+                        # Eğitim seti için tahmin ve metrikler
+                        y_pred_train = (ann_model.predict(self.X_train) > 0.5).astype(int).flatten()
+                        train_evaluator = MetricsEvaluator(self.y_train, y_pred_train)
+                        train_metrics = train_evaluator.get_metrics()
+
+                        # Validation seti için tahmin ve metrikler
+                        y_pred_val = (ann_model.predict(self.X_val) > 0.5).astype(int).flatten()
+                        val_evaluator = MetricsEvaluator(self.y_val, y_pred_val)
+                        val_metrics = val_evaluator.get_metrics()
+
+                        # Eğitim ve Validation için Confusion Matrix çiz
+                        self.visualizer.plot_confusion_matrix(
+                            y_true=self.y_train,
+                            y_pred=y_pred_train,
+                            set_type="train",
+                            model_name="ANN",
+                            params={"LR": lr, "Epochs": epochs, "Layers": hidden_layers, "Optimizer": optimizer_name},
+                            save_dir=self.confusion_matrix_dir
+                        )
+
+                        self.visualizer.plot_confusion_matrix(
+                            y_true=self.y_val,
+                            y_pred=y_pred_val,
+                            set_type="validation",
+                            model_name="ANN",
+                            params={"LR": lr, "Epochs": epochs, "Layers": hidden_layers, "Optimizer": optimizer_name},
+                            save_dir=self.confusion_matrix_dir
+                        )
+
+                        # Metrikleri listeye ekle
+                        self.metrics_list.append([
+                            "ANN", lr, epochs, hidden_layers, optimizer_name,
+                            train_metrics, val_metrics
+                        ])
+
+                        # Kayıp grafiğini kaydet
+                        self.visualizer.plot_loss(
+                            history=history,
+                            learning_rate=lr,
+                            epochs=epochs,
+                            optimizer_name=optimizer_name,
+                            hidden_layers=hidden_layers,
+                            save_dir=self.loss_plots_dir
+                        )
+
+                        # Karar sınırlarını kaydet
+                        decision_boundary_path = os.path.join(
+                            self.decision_plots_dir,
+                            f"ann_decision_boundary_LR{lr}_Epoch{epochs}_Opt{optimizer_name}_Layers{hidden_layers}.png"
+                        )
+                        self.visualizer.plot_decision_boundary(
+                            model=ann_model,
+                            X=self.X_val,
+                            y=self.y_val,
+                            save_path=decision_boundary_path,
+                            model_type="ANN",
+                            learning_rate=lr,
+                            epochs=epochs,
+                            optimizer_name=optimizer_name,
+                            hidden_layers=hidden_layers
+                        )
+                        
+
+                        # Modeli kaydet
+                        model_path = os.path.join(self.model_dir, f"ann_model_LR{lr}_Epoch{epochs}_Opt{optimizer_name}_Layers{hidden_layers}.keras")
+                        ann_model.save(model_path)
+
+        self.logger.info("ANN training complete.")
+
+    def train_svm(self, kernel_params):
+        """
+        Destek Vektör Makineleri (SVM) için eğitim yapar.
+
+        Args:
+            kernel_params (dict): Kernel türleri ve parametrelerini içeren sözlük.
+        """
+
+        for kernel, params in kernel_params.items():
+            for C in params.get("C", [1]):
+                for degree in params.get("degree", [3]):
+                    for gamma in params.get("gamma", ["scale"]):
+                        self.logger.info(f"Training SVM: Kernel={kernel}, C={C}, Degree={degree}, Gamma={gamma}...")
+                        
+                        # SVM Modelini oluştur ve eğit
+                        svm_builder = SVMModel(kernel=kernel, C=C, degree=degree, gamma=gamma)
+                        svm_model = svm_builder.build_model()
+                        svm_model.fit(self.X_train, self.y_train)
+
+                        # Eğitim seti için tahmin ve metrikler
+                        y_pred_train = svm_model.predict(self.X_train)
+                        train_evaluator = MetricsEvaluator(self.y_train, y_pred_train)
+                        train_metrics = train_evaluator.get_metrics()
+
+                        # Validation seti için tahmin ve metrikler
+                        y_pred_val = svm_model.predict(self.X_val)
+                        val_evaluator = MetricsEvaluator(self.y_val, y_pred_val)
+                        val_metrics = val_evaluator.get_metrics()
+
+                        # Eğitim ve Validation için Confusion Matrix çiz
+                        self.visualizer.plot_confusion_matrix(
+                            y_true=self.y_train,
+                            y_pred=y_pred_train,
+                            set_type="train",
+                            model_name="SVM",
+                            params={"Kernel": kernel, "C": C, "Degree": degree, "Gamma": gamma},
+                            save_dir=self.confusion_matrix_dir
+                        )
+
+                        self.visualizer.plot_confusion_matrix(
+                            y_true=self.y_val,
+                            y_pred=y_pred_val,
+                            set_type="validation",
+                            model_name="SVM",
+                            params={"Kernel": kernel, "C": C, "Degree": degree, "Gamma": gamma},
+                            save_dir=self.confusion_matrix_dir
+                        )
 
 
-# Step 1: Dataset Preparation
-print("Creating and splitting the dataset...")
-dataset_processor = DatasetProcessor()
-dataset = dataset_processor.create_dataset()
-splits = dataset_processor.split_dataset()
+                        # Metrikleri listeye ekle
+                        self.metrics_list.append([
+                            "SVM", kernel, C, degree, gamma,
+                            train_metrics, val_metrics
+                        ])
 
-X_train, y_train = splits["train"]
-X_val, y_val = splits["validation"]
-X_test, y_test = splits["test"]
+                        decision_boundary_path = os.path.join(
+                            self.decision_plots_dir,
+                            f"svm_decision_boundary_{kernel}_C{C}_Degree{degree}_Gamma{gamma}.png"
+                        )
+                        self.visualizer.plot_decision_boundary(
+                            model=svm_model,
+                            X=self.X_val,
+                            y=self.y_val,
+                            save_path=decision_boundary_path,
+                            model_type="SVM",
+                            kernel=kernel,
+                            C=C,
+                            degree=degree,
+                            gamma=gamma
+                        )
 
-# Visualize dataset
-visualizer = Visualizer(save_dir=PLOTS_DIR)
-visualizer.plot_all_data(dataset)
-visualizer.plot_splits(splits)
+                        # Modeli kaydet
+                        model_path = os.path.join(
+                            self.model_dir,
+                            f"svm_model_{kernel}_C{C}_Degree{degree}_Gamma{gamma}.pkl"
+                        )
+                        joblib.dump(svm_model, model_path)
 
-# Step 2: ANN Training
-learning_rates = [0.001, 0.01, 0.05, 0.1]
-epochs_list = [50]
-optimizers = {"SGD": 1, "BGD": len(X_train), "MBGD": 32}
-layer_configurations = [1, 2, 3]
+        self.logger.info("SVM training complete.")
 
-metrics_list = []
-model_types = []
+    def save_combined_metrics(self):
+        """
+        Tüm eğitim ve doğrulama metriklerini birleştirir ve dosyaya kaydeder.
+        """
+        self.logger.info("\nSaving combined metrics...")
+        with open(self.metrics_path, "w") as file:
+            header = "{:<8} {:<12} {:<8} {:<8} {:<14} {:<10} {:<10} {:<10} {:<10} {:<10} {:<10} {:<10} {:<10}\n"
+            file.write(header.format(
+                "Model", "Param1", "Param2", "Param3", "Param4",
+                "T_Acc", "T_Prec", "T_Recall", "T_F1",
+                "V_Acc", "V_Prec", "V_Recall", "V_F1"
+            ))
 
-for lr in learning_rates:
-    for epochs in epochs_list:
-        for optimizer_name, batch_size in optimizers.items():
-            for hidden_layers in layer_configurations:
-                print(f"Training ANN: LR={lr}, Epochs={epochs}, Optimizer={optimizer_name}, Layers={hidden_layers}...")
-                ann_builder = ANNModel(input_dim=X_train.shape[1], hidden_layers=hidden_layers, learning_rate=lr)
-                ann_model = ann_builder.build_model()
+            for entry in self.metrics_list:
+                model_type, p1, p2, p3, p4, train_metrics, val_metrics = entry
+                row = "{:<8} {:<12} {:<8} {:<8} {:<14} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f}\n"
+                file.write(row.format(
+                    model_type, p1, p2, p3, p4,
+                    train_metrics['accuracy'], train_metrics['precision'], train_metrics['recall'], train_metrics['f1_score'],
+                    val_metrics['accuracy'], val_metrics['precision'], val_metrics['recall'], val_metrics['f1_score']
+                ))
 
-                history = ann_model.fit(
-                    X_train, y_train,
-                    validation_data=(X_val, y_val),
-                    epochs=epochs,
-                    batch_size=batch_size,
-                    verbose=0,  # Ara logları kapat
-                    callbacks=[LogEpoch()]  # İlk ve son epoch loglama
-                )
+        self.logger.info(f"Combined metrics saved to {self.metrics_path}.")
 
+            
+if __name__ == "__main__":
+    trainer = Trainer()
+    trainer.prepare_data()
 
-                y_pred = (ann_model.predict(X_test) > 0.5).astype(int).flatten()
-                evaluator = MetricsEvaluator(y_test, y_pred)
-                metrics = evaluator.get_metrics()
-                metrics_list.append(["ANN", lr, epochs, hidden_layers, optimizer_name, metrics])
-                model_types.append("ANN")
+    # ANN Eğitim Ayarları
+    # learning_rates = [0.01]
+    learning_rates = [0.0001,0.001,0.01, 0.1]
 
-                # Save loss plot
-                visualizer.plot_loss(
-                    history=history,
-                    learning_rate=lr,
-                    epochs=epochs,
-                    optimizer_name=optimizer_name,
-                    hidden_layers=hidden_layers,
-                    save_dir=LOSS_PLOTS_DIR
-                )
+    # epochs_list = [50]
+    epochs_list = [50, 250, 500,1000]
 
-                # Save decision boundary
-                visualizer.plot_decision_boundary(
-                    model=ann_model,
-                    X=X_test,
-                    y=y_test,
-                    save_dir=DECISION_PLOTS_DIR,
-                    learning_rate=lr,
-                    epochs=epochs,
-                    optimizer_name=optimizer_name,
-                    hidden_layers=hidden_layers,
-                    model_type="ANN"
-                )
+    optimizers = {"SGD": 1, "BGD": len(trainer.X_train), "MBGD": 32}
+    layer_configurations = [1, 2, 3]
 
-                # Save model
-                model_path = os.path.join(MODEL_DIR, f"ann_model_LR{lr}_Epoch{epochs}_Opt{optimizer_name}_Layers{hidden_layers}.keras")
-                ann_model.save(model_path)
+    trainer.train_ann(
+        learning_rates=learning_rates,
+        epochs_list=epochs_list,
+        optimizers=optimizers,
+        layer_configurations=layer_configurations
+    )
 
-# Step 3: SVM Training
-kernel_params = {
-    "linear": {"C": [0.1, 1]},
-    "poly": {"C": [0.1], "degree": [2]},
-    "rbf": {"C": [0.1], "gamma": ["scale"]}
-}
+    # SVM Eğitim Ayarları
+    # kernel_params = {
+    #     "linear": {"C": [0.1, 1]},
+    #     "poly": {"C": [0.1], "degree": [2]},
+    #     "rbf": {"C": [0.1], "gamma": ["scale"]}
+    # }
 
-for kernel, params in kernel_params.items():
-    for C in params.get("C", [1]):
-        for degree in params.get("degree", [3]):
-            for gamma in params.get("gamma", ["scale"]):
-                print(f"Training SVM: Kernel={kernel}, C={C}, Degree={degree}, Gamma={gamma}...")
-                svm_builder = SVMModel(kernel=kernel, C=C, degree=degree, gamma=gamma)
-                svm_model = svm_builder.build_model()
-                svm_model.fit(X_train, y_train)
+    kernel_params = {
+        "linear": {"C": [0.01, 0.1, 1, 10, 100]},  
+        "poly": {
+            "C": [0.01, 0.1, 1, 10], 
+            "degree": [2, 3, 4], 
+            "gamma": ["scale", "auto"]  
+        },
+        "rbf": {
+            "C": [0.01, 0.1, 1, 10, 100], 
+            "gamma": ["scale", "auto", 0.01, 0.1, 1]  
+        }
+    }
 
-                y_pred = svm_model.predict(X_test)
-                evaluator = MetricsEvaluator(y_test, y_pred)
-                metrics = evaluator.get_metrics()
-                metrics_list.append(["SVM", kernel, C, degree, gamma, metrics])
-                model_types.append("SVM")
-
-                # Save decision boundary
-                decision_boundary_path = os.path.join(DECISION_PLOTS_DIR, f"svm_decision_boundary_{kernel}_C{C}_Degree{degree}_Gamma{gamma}.png")
-                visualizer.plot_decision_boundary(
-                    model=svm_model,
-                    X=X_test,
-                    y=y_test,
-                    save_path=decision_boundary_path,
-                    model_type="SVM"
-                )
-
-                # Save model
-                model_path = os.path.join(MODEL_DIR, f"svm_model_{kernel}_C{C}_Degree{degree}_Gamma{gamma}.pkl")
-                joblib.dump(svm_model, model_path)
-
-# Step 4: Save Combined Metrics
-metrics_txt_path = os.path.join(SAVE_DIR, "combined_metrics.txt")
-with open(metrics_txt_path, "w") as file:
-    header = "{:<8} {:<12} {:<8} {:<8} {:<14} {:<10} {:<10} {:<10} {:<10}\n"
-    file.write(header.format("Model", "Param1", "Param2", "Param3", "Param4", "Accuracy", "Precision", "Recall", "F1-Score"))
-
-    for entry in metrics_list:
-        model_type, p1, p2, p3, p4, metrics = entry
-        row = "{:<8} {:<12} {:<8} {:<8} {:<14} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f}\n"
-        file.write(row.format(model_type , p1, p2, p3, p4, metrics['accuracy'], metrics['precision'], metrics['recall'], metrics['f1_score']))
-
-print("\nTraining complete! Combined metrics saved to text file.")
-
-# Reset stdout and close log file
-sys.stdout = sys.__stdout__
-log_file.close()
+    trainer.train_svm(kernel_params=kernel_params)
+    trainer.save_combined_metrics()
