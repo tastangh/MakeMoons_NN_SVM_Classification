@@ -39,11 +39,11 @@ python eval.py
 1. Model eğitimi ve eğitim çıktılarını oluşturma
 python train.py
 
-2. Eğitime sokulan bir modeli değerlendirme ve çıktılarını oluşturma
+3. Eğitime sokulan bir modeli değerlendirme ve çıktılarını oluşturma
 python eval.py
 
 ### Dosya Düzeni
-MakeMoons_NN_SVM_Classification/
+/MakeMoons_NN_SVM_Classification
     ├── ann_model.py              # ANN modeli
     ├── dataset.py                # Veri kümesinin oluşturulması ve bölünmesi
     ├── eval.py                   # Modellerin test edilmesi ve değerlendirilmesi
