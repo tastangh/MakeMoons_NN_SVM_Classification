@@ -1,7 +1,7 @@
 # **MakeMoons_NN_SVM_Classification**
 
 ## **Açıklama**
-- Bu proje, Makine Öğrenmesi (BLM5110) dersi kapsamında, `make_moons` kullanılarak iki sınıflı bir sınıflandırma  üzerine Yapay Sinir Ağları (ANN) ve Destek Vektör Makineleri (SVM) modelleri ile çalışmaktadır.
+Bu proje, Makine Öğrenmesi (BLM5110) dersi kapsamında, `make_moons` kullanılarak iki sınıflı bir sınıflandırma  üzerine Yapay Sinir Ağları (ANN) ve Destek Vektör Makineleri (SVM) modelleri ile çalışmaktadır.
 
 Bu projede, `make_moons` ile 400 veriden oluşturulan bir veri kümesi kullanılmıştır.Çalışmanın temel adımları şunlardır:
 1. **Veri Hazırlığı**:
@@ -36,10 +36,10 @@ pip install -r requirements.txt3- Eğitime sokulan bir modeli metriklere  göre 
 python eval.py
 
 ## Çalıştırma
-1. - Model eğitimi ve eğitim çıktılarını oluşturma
+1. Model eğitimi ve eğitim çıktılarını oluşturma
 python train.py
 
-2. - Eğitime sokulan bir modeli değerlendirme ve çıktılarını oluşturma
+2. Eğitime sokulan bir modeli değerlendirme ve çıktılarını oluşturma
 python eval.py
 
 ### Dosya Düzeni
