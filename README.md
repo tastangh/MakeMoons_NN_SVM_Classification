@@ -58,13 +58,13 @@ python eval.py
     ├── visualize.py              # Görselleştirme (sınıf dağılımı, karar sınırları vb.)
     ├── requirements.txt          # Gerekli kütüphaneler
     ├── README.md                 # Proje açıklaması
-    ├── dataset/                  # Veri kümesi ve görselleştirilmeleri
+    ├── dataset/                  # Veri kümesi (ham veriler veya örnek veri dosyaları)
     ├── train_results/            # Eğitim çıktıları ve görseller
-        ├── models                # Eğitilen modeller
-        ├── plots                 # Eğitim Görselleri (Kayıp Grafikleri,Confusion matrixleri ve KararSınırı Görselleri)
-        |── combined_metrics.txt  # Eğitim Metrikleri (Model ve hiperparemetre bazlı train ve val sonuçları tablosu)
-        |── train.log             # Eğitim Logları
+    │   ├── models                # Eğitilen modeller
+    │   ├── plots                 # Eğitim görselleri (Kayıp grafikleri, confusion matrix'leri ve karar sınırı görselleri)
+    │   ├── combined_metrics.txt  # Eğitim metrikleri (model ve hiperparametre bazlı train ve val sonuçları tablosu)
+    │   ├── train.log             # Eğitim logları
     ├── evaluation_results/       # Değerlendirme çıktıları
-        ├── plots                 # Değerlendirme Görselleri (Confusion matrixleri ve Karar Sınırı Görselleri)
-        |── combined_metrics.txt  # Değerlendirme Metrikleri (Model ve hiperparemetre bazlı test sonuçları tablosu)
+    │   ├── plots                 # Değerlendirme görselleri (confusion matrix'leri ve karar sınırı görselleri)
+    │   ├── combined_metrics.txt  # Değerlendirme metrikleri (model ve hiperparametre bazlı test sonuçları tablosu)
 
