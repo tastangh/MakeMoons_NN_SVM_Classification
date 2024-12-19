@@ -61,7 +61,7 @@ python eval.py
     ├── dataset/                  # Veri kümesi (ham veriler veya örnek veri dosyaları)
     ├── train_results/            # Eğitim çıktıları ve görseller
     │   ├── models                # Eğitilen modeller
-    │   ├── plots                 # Eğitim görselleri (Kayıp grafikleri, confusion matrix'leri ve karar sınırı görselleri)
+    │   ├── plots                 # Eğitim görselleri (kayıp grafikleri, confusion matrix'leri ve karar sınırı görselleri)
     │   ├── combined_metrics.txt  # Eğitim metrikleri (model ve hiperparametre bazlı train ve val sonuçları tablosu)
     │   ├── train.log             # Eğitim logları
     ├── evaluation_results/       # Değerlendirme çıktıları
