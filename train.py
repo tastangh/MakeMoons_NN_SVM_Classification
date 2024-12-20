@@ -56,7 +56,7 @@ class Trainer:
         Ayrıca veri setinin genel ve ayrılmış haliyle ilgili görselleştirmeler yapar.
         """
         self.logger.info("Creating and splitting the dataset...")
-        dataset_processor = DatasetProcessor()
+        dataset_processor = DatasetProcessor(noise=0.2)
         dataset = dataset_processor.create_dataset()
         splits = dataset_processor.split_dataset()
 
